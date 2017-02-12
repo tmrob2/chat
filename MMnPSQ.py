@@ -10,6 +10,8 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import operator
+from collections import deque
+
 
 
 class Individuals():
@@ -24,56 +26,86 @@ class Individuals():
 class SimulationModel():
     
     def __init__(self, service_rate, server_count):
-        self.queue = []
+        self.queue = deque()
         self.demand = self.generate_demand(18) 
-        self.history = []
+        self.history = {}
         self.service_rate = service_rate
         self.server_count = server_count
         
     def MMS1PS_simulation_loop(self, max_sim_time, concurency_limit: int, model_type = 'mbf'):
-        t,Na,C1,C2 = 0,0,0,0
-        SS = np.array([0,0,0])
+        t, na, c1, c2 = 0, 0, 0, 0
 
-        #generate a two server model
+        # generate a two server model
         shift = [Servers(self.service_rate, i, concurency_limit) for i in range(self.server_count)]
-        #generate the first service time
-        T0 = rnd.expovariate(self.demand[5])
+        # generate the first service time
+        t0 = rnd.expovariate(self.demand[5])*60.
+        ta = t0
+
         while t < max_sim_time:
-            ta = T0
-           
-            #loop through the servers to see who is the most busy but not reached their concurrency limit
+            # loop through the servers to see who is the most busy but not reached their concurrency limit
             agents = [(x.concurrent_chats, x.id) for x in shift if x.concurrent_chats < concurency_limit]
-            #this could be zero length for which the person will be assigned to a queue and given a wait time
+            # this could be zero length for which the person will be assigned to a queue and given a wait time
             
             if model_type == 'mbf':
-                agents.sort(key = operator.itemgetter(0), reverse=True)
+                agents.sort(key=operator.itemgetter(0), reverse=True)
             else: 
-                agents.sort(key = operator.itemgetter(0))
+                agents.sort(key=operator.itemgetter(0))
 
-            min_agent_ts = min([x.min_service_time() if len(x.in_service_ts) != 0 else math.inf for x in shift])
+            min_agent_ts = min([x.min_service_time() if len(x.service) != 0 else math.inf for x in shift])
 
             if ta == min(min_agent_ts,ta):
-                #add another individual
-                Na = Na+1
-                t=ta
-                ind = Individuals(t,Na)
-                self.queue.append(ind)
-                self.history.append(ind)
+                # add another individual
+                na += 1
+                t = ta
+                ind = Individuals(t, na)
+                self.history[ind.id] = ind
+
                 if int(ta/60) < 5 or int(1080 - ta/60) < 5:
-                    ta = rnd.expovariate(self.demand[5])
+                    ta = rnd.expovariate(self.demand[5])*60. + t
+                else:
+                    ta = rnd.expovariate(self.demand[int(t)])*60. + t
 
                 if len(agents) != 0:
-                    #amend the system time
-                    ind_to_serve = self.queue.pop(0)
-                    shift[agents[0][1]].add_to_queue(ind_to_serve,t)
+                    # An agent has capacity to serve a customer
+                    if len(self.queue) > 0:
+                        ind_to_serve = self.queue.popleft()
+                        self.queue.append(ind)
+                    else:
+                        ind_to_serve = ind
+                    shift[agents[0][1]].add_to_queue(ind_to_serve, t)
                 else:
-                    ind = self.queue[-1]
-                    ind.wait_time = min_agent_ts - t 
+                    # An agent does not have capacity to serve a customer
+                    self.queue.append(ind)
+                    for i in self.queue:
+                        i.wait_time = t - i.arrival_time
             else:
                 
-                #ammend the system time
+                # Ammend the system time
                 t = min_agent_ts
-                shift[agents[0][1]].depart_customer_from_service_line(t)
+                for i in shift:
+                    i.depart_customer_from_service_line(t)
+
+        while len(self.queue) != 0:
+
+            # this could be zero length for which the person will be assigned to a queue and given a wait time
+            min_agent_ts = min([x.min_service_time() if len(x.service) != 0 else math.inf for x in shift])
+            t = min_agent_ts
+
+            ind_to_serve = self.queue.popleft()
+            for i in shift:
+                i.depart_customer_from_service_line(t)
+
+            agents = [(x.concurrent_chats, x.id) for x in shift if x.concurrent_chats < concurency_limit]
+
+            if model_type == 'mbf':
+                agents.sort(key=operator.itemgetter(0), reverse=True)
+            else:
+                agents.sort(key=operator.itemgetter(0))
+
+            shift[agents[0][1]].add_to_queue(ind_to_serve, t)
+
+            for i in self.queue:
+                i.wait_time = t - i.arrival_time
 
         return shift, self.history
 
@@ -87,15 +119,37 @@ class SimulationModel():
         demand = -6*t*(t-work_day_hours)
         return demand
 
-class Servers():
+    def plot_wait_time(self):
+        wt = []
+        for i in range(1,len(self.history)):
+            wt.append(self.history[i].wait_time)
+        plt.figure()
+        plt.hist(wt, 50)
+        return 1
+
+    def plot_service_time(self, shift):
+        st = []
+        dt = []
+        for i in range(0, len(shift)):
+            st.append(shift[i].arrival_times)
+            dt.append(shift[i].departure_times)
+
+        plt.figure()
+        plt.hist(st, 50)
+
+        plt.figure()
+        plt.hist(dt,50)
+
+
+class Servers:
 
     def __init__(self, mean_ts, id, conc_lim):
-        self.arival_times = []
+        self.arrival_times = []
         self.customer_number = []
         self.departure_times = []
         self.server_times = []
         self.server_queue = []
-        self.service = [] #this is the operating service and limited by the concurrent chats pair(Individual, departure_time)
+        self.service = {} #this is the operating service and limited by the concurrent chats pair(Individual, departure_time)
         self.idle_time = []
         self.concurrent_chats = 0
         self.in_service_ts = []
@@ -106,29 +160,28 @@ class Servers():
     def add_to_queue(self, ind: Individuals, t):
         self.server_queue.append(ind)
         
-        if self.concurrent_chats < 3:
+        if self.concurrent_chats <= 3:
             self.add_to_service_line(ind, t)
             
     def add_to_service_line(self, ind: Individuals, t):
-        self.server_queue.pop() 
-        self.concurrent_chats = self.concurrent_chats + 1
-        self.customer_number.append(ind.id)
-        #generate a service time
-        ts = rnd.expovariate(1/self.mean_service_time)*60.
-        self.in_service_ts.append(ts)
-        self.server_times.append(ts)
-        self.departure_times.append(ts+t)
-        ind.departure_time = ts+t
-        self.service.append((ind, ts+t))
-        self.concurrency_measure.append((self.concurrent_chats, t))
+        t_exp = rnd.expovariate(1 / self.mean_service_time) * 60.
+        ts = t + t_exp
+        self.server_times.append(t_exp)
+        ind.departure_time = ts + ind.arrival_time
+        self.service[ind.id] = {'ta': ind.arrival_time,
+                                'ts': ts}
+        self.concurrent_chats += 1
 
     def min_service_time(self):
-        return min(self.in_service_ts)
+        m = math.inf
+        for k,v in self.service.items():
+            if v['ts'] < m:
+                m = v['ts']
+        return m
 
     def depart_customer_from_service_line(self,t):
-        self.service = [(ind, td) for ind,td in self.service if td > t]
-        self.concurrent_chats = self.concurrent_chats - 1
-        self.in_service_ts.remove[t]
+        self.service = {k:v for k,v in self.service.items() if v['ts'] != t}
+        self.concurrent_chats = len(self.service)
 
 
 
