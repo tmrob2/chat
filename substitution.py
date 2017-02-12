@@ -10,7 +10,7 @@ from statsmodels.tsa.filters.hp_filter import hpfilter
 from statsmodels.tsa.stattools import acf, pacf
 
 #First import to check the data was imported correctly; cleaned in R so shouldn't be a problem
-path = "D:/BigDataAnalytics/eChat/Analysis/"
+path = "E:/BigDataAnalytics/eChat/Analysis/"
 file_ts_data = "contactsbytype.csv"
 file_stats_2015 = "contacts&statsbytype2015.csv"
 
@@ -21,8 +21,8 @@ def read_data(path,filename):
 data1 = read_data(path,file_ts_data)
 data2 = read_data(path, file_stats_2015)
 
-data1.head()
-data2.head()
+#data1.head()
+#data2.head()
 
 #Import the data and overwrite the pandas dataframe currently storing the time series data with date parser 
 #object converted to datetime 
@@ -72,8 +72,8 @@ plt.legend(loc='best')
 
 def test_stationarity(timeseries, title=""):
     #determing the rolling statistics
-    rollmean = timeseries.rolling(center=False, window = 30).mean()
-    rolstd = timeseries.rolling(center=False, window = 30).std()
+    rollmean = timeseries.rolling(center=False, window = 7).mean()
+    rolstd = timeseries.rolling(center=False, window = 7).std()
 
     #Plot rolling stats
     fig = plt.figure()
@@ -97,30 +97,22 @@ def test_stationarity(timeseries, title=""):
 
 def test_stationarity_AUG(timeseries1, timeseries2, title:list):
     #determing the rolling statistics
-    rollmean1 = timeseries1.rolling(center=False, window = 30).mean()
+    win = 30
+    rollmean1 = timeseries1.rolling(center=False, window = win).mean()
     #rolstd1 = timeseries1.rolling(center=False, window = 30).std()
-    rollmean2 = timeseries2.rolling(center=False, window = 30).mean()
+    rollmean2 = timeseries2.rolling(center=False, window = win).mean()
     #rollstd2 = timeseries2.rolling(center =False, window =30).std()
     #Plot rolling stats
     fig = plt.figure()
     #orig = plt.plot(timeseries, color='blue', label = 'Orginal')
-    mean1 = plt.plot(rollmean1, color = 'darkslateblue', label = "Rolling Mean %s"%title[0])
-    mean2 = plt.plot(rollmean2, color = 'darkred', label = "Rolling Mean %s"%title[1])
+    mean1 = plt.plot(rollmean1, color = 'darkviolet', linewidth = 2, label = "%s day Rolling Mean %s"%(win,title[0]))
+    mean2 = plt.plot(rollmean2, color = 'slateblue', linewidth = 2,label = "%s day Rolling Mean %s"%(win,title[1]))
     #std1 = plt.plot(rolstd1, color = 'black', label = 'Rolling Std')
     plt.legend(loc='best')
-    plt.title('%s and %s Rolling Mean'%(title[0],title[1]))
-    
-    #Perform Dickey-Fuller Test:
-    print('Results from Dickey Fuller test: '+title)
-    dftest = adfuller(timeseries, autolag = 'AIC')
-    dfoutput = pd.Series(dftest[0:4], 
-                         index=['Test Statistic', 
-                                'p-value', 
-                                '#Lags Used', 
-                                'Number of Observations Used'])
-    for k,v in dftest[4].items():
-        dfoutput['Critical Value (%s)'%k] = v 
-    print(dfoutput)
+    plt.title('Total Contacts for %s and %s Rolling Mean'%(title[0],title[1]))
+    plt.savefig('%s_%s_Rolling_Mean'%(title[0],title[1]))
+
+test_stationarity_AUG(ts_chat.dropna(), ts_voice.dropna(), ['Chat', 'Voice'])
 ls = [ts_chat.dropna(), ts_voice.dropna(), ts_voice_xfer.dropna(), ts_outboundcall.dropna(), ts_offline.dropna()]
 ls_names = ['Chat', 'Inbound Voice', 'Inbound Voice XFER', 'Oubound Voice', 'Offline']
 
@@ -201,7 +193,7 @@ generated = sub_data['generated'] - sub_data['COUNT_OF_CONTACTS']
 
 sub_data['gen_final'] = generated 
 percentage = (sub_data['COUNT_OF_CONTACTS.Chat'] - 
-              sub_data['generated'])/sub_data['COUNT_OF_CONTACTS.Chat']
+              sub_data['gen_final'])/sub_data['COUNT_OF_CONTACTS.Chat']*100
 sub_data['subs_percent'] = percentage
 sub_data = sub_data[sub_data.index.year < 2017]
 
@@ -227,7 +219,7 @@ p3 = ax1.bar(mths, M_sub_avgs['COUNT_OF_CONTACTS'],
              width = 0.5, yerr=M_sub_sdevs['COUNT_OF_CONTACTS'],
              bottom=[i+j for i,j in zip(M_sub_avgs['COUNT_OF_CONTACTS.x'],M_sub_avgs['COUNT_OF_CONTACTS.y'])],
              color = 'mediumorchid',
-             label = 'Long time no faults')
+             label = 'Tenured Customers with no complaint history')
 p4 = ax1.bar(mths, M_sub_avgs['gen_final'], 
              width = 0.5, yerr=M_sub_sdevs['gen_final'],
              bottom=[i+j+k for i,j,k in zip(M_sub_avgs['COUNT_OF_CONTACTS.x'],
@@ -239,9 +231,10 @@ plt.title('Chat Substitution: Breakdown of subsitution types by month')
 plt.xticks(mths,mths_names)
 
 ax2 = ax1.twinx()
-p5 = ax2.plot(mths, M_sub_avgs['subs_percent'], '--k',label = 'percentage_substituted')
+p5 = ax2.plot(mths, M_sub_avgs['subs_percent'], '--r', linewidth = 2, label = 'percentage_substituted')
 ax2.set_ylim([0,100])
-ax1.legend(loc='best')
+ax1.legend(loc='upper center', bbox_to_anchor=(0.5, -0.05),
+          ncol=3, fancybox=True, shadow=True)
 ax2.legend(loc='best')
 fig.tight_layout()
 fig.savefig("chat_volume_breakdown.png")

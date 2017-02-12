@@ -12,18 +12,35 @@ from scipy.special import gammainc
 import math
 import mpmath
 from scipy.stats import norm
-
+import scipy.stats 
 
 a = []
 b = []
+c = []
+d = []
 
-for i in range(0,1000):
-    a.append(random.expovariate(1/25))
-    b.append(random.betavariate(5,5))
+for i in range(0,100000):
+    a.append(random.expovariate(demand[50])*60.)
+    b.append(random.expovariate(demand[540])*60.)
+    c.append(random.expovariate(demand[5])*60.)
+    d.append(random.expovariate(1/25)*60.)
 
-#plt.hist(a, 50, normed=1, facecolor='green', alpha=0.75)
-plt.hist(b, 50, normed=1, faceolor = 'blue', alpha=0.75)
-plt.show()
+fig = plt.figure()
+n, x1, _ = plt.hist(a, 500, normed=1, alpha=0.75)
+density1 = scipy.stats.gaussian_kde(a)
+fig = plt.figure()
+n, x2, _ = plt.hist(b, 500, normed=1, alpha=0.75)
+density2 = scipy.stats.gaussian_kde(b)
+fig = plt.figure()
+n, x3, _ = plt.hist(c, 500, normed=1, alpha=0.75)
+density3 = scipy.stats.gaussian_kde(b)
+fig = plt.figure()
+plt.hist(d, 500, normed=1, alpha=0.75)
+
+fig = plt.figure()
+plt.plot(x1, density1(x1), '-r', linewidth = 1.5)
+plt.plot(x2, density2(x2), '-k', linewidth = 1.5)
+plt.plot(x3, density2(x2), '-b', linewidth = 1.5)
 
 t = np.linspace(0,18,18*60)
 demand = -6*t*(t-18)
@@ -39,7 +56,7 @@ def eps(k, d, mu):
 fig = plt.figure()
 
 
-d = demand[540]/3600
+d = demand[5]/3600
 mu = 1/(30*60)
 n=200
 c = (n*mu)/theta
