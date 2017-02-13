@@ -70,3 +70,8 @@ P = (1 + (d - n*mu)*J)/(eps(n,d,mu)+d*J)
 plt.plot(theta,P)
 plt.ylim(0,1)
 plt.xlim(0.05,1)
+
+
+import MMnPSQ
+sim = MMnPSQ.SimulationModel(30,200)
+shift, hist = sim.MMS1PS_simulation_loop(64800,5)

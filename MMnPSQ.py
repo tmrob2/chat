@@ -61,9 +61,9 @@ class SimulationModel():
                 self.history[ind.id] = ind
 
                 if int(ta/60) < 5 or int(1080 - ta/60) < 5:
-                    ta = rnd.expovariate(self.demand[5])*60. + t
+                    ta = rnd.expovariate(self.demand[5])*600. + t
                 else:
-                    ta = rnd.expovariate(self.demand[int(t)])*60. + t
+                    ta = rnd.expovariate(self.demand[int(t)])*600. + t
 
                 if len(agents) != 0:
                     # An agent has capacity to serve a customer
@@ -73,23 +73,29 @@ class SimulationModel():
                     else:
                         ind_to_serve = ind
                     shift[agents[0][1]].add_to_queue(ind_to_serve, t)
+                    for i in self.queue:
+                        i.wait_time = ta - i.arrival_time
                 else:
                     # An agent does not have capacity to serve a customer
                     self.queue.append(ind)
                     for i in self.queue:
-                        i.wait_time = t - i.arrival_time
+                        i.wait_time = ta - i.arrival_time
             else:
                 
                 # Ammend the system time
                 t = min_agent_ts
                 for i in shift:
                     i.depart_customer_from_service_line(t)
+                for i in self.queue:
+                    i.wait_time = t - i.arrival_time
 
         while len(self.queue) != 0:
 
             # this could be zero length for which the person will be assigned to a queue and given a wait time
             min_agent_ts = min([x.min_service_time() if len(x.service) != 0 else math.inf for x in shift])
             t = min_agent_ts
+            for i in self.queue:
+                i.wait_time = t - i.arrival_time
 
             ind_to_serve = self.queue.popleft()
             for i in shift:
@@ -104,8 +110,7 @@ class SimulationModel():
 
             shift[agents[0][1]].add_to_queue(ind_to_serve, t)
 
-            for i in self.queue:
-                i.wait_time = t - i.arrival_time
+
 
         return shift, self.history
 
@@ -116,29 +121,33 @@ class SimulationModel():
         is a concave quadratic continuous function in the R2 space
         """
         t = np.linspace(0,work_day_hours,work_day_hours*60*60)
-        demand = -6*t*(t-work_day_hours)
+        demand = -3*t*(t-work_day_hours)
         return demand
 
     def plot_wait_time(self):
         wt = []
         for i in range(1,len(self.history)):
-            wt.append(self.history[i].wait_time)
+            if self.history[i].wait_time != 0:
+                wt.append(self.history[i].wait_time)
         plt.figure()
-        plt.hist(wt, 50)
+        plt.hist(wt, 500)
+        plt.xlim(0,500)
         return 1
 
-    def plot_service_time(self, shift):
+    def plot_service_time(self):
         st = []
         dt = []
-        for i in range(0, len(shift)):
-            st.append(shift[i].arrival_times)
-            dt.append(shift[i].departure_times)
+        for i in range(1, len(self.history)):
+            st.append(self.history[i].arrival_time)
+            dt.append(self.history[i].departure_time)
 
         plt.figure()
         plt.hist(st, 50)
+        plt.title('Arrival Time')
 
         plt.figure()
         plt.hist(dt,50)
+        plt.title('Departure Time')
 
 
 class Servers:
@@ -156,18 +165,19 @@ class Servers:
         self.mean_service_time = mean_ts
         self.id = id
         self.concurrency_measure = []
+        self.conc_lim = conc_lim
 
     def add_to_queue(self, ind: Individuals, t):
         self.server_queue.append(ind)
         
-        if self.concurrent_chats <= 3:
+        if self.concurrent_chats <= self.conc_lim:
             self.add_to_service_line(ind, t)
             
     def add_to_service_line(self, ind: Individuals, t):
-        t_exp = rnd.expovariate(1 / self.mean_service_time) * 60.
+        t_exp = rnd.expovariate(1 / self.mean_service_time)*60.
         ts = t + t_exp
         self.server_times.append(t_exp)
-        ind.departure_time = ts + ind.arrival_time
+        ind.departure_time = ts
         self.service[ind.id] = {'ta': ind.arrival_time,
                                 'ts': ts}
         self.concurrent_chats += 1
