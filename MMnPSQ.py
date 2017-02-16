@@ -33,7 +33,7 @@ class SimulationModel():
         self.service_rate = service_rate
         self.server_count = server_count
         t = np.linspace(1,1000,1000)
-        self.survival = np.exp(-np.exp(-9.5/0.902)*t**(1/0.902))
+        self.survival = np.exp(-np.exp(-12.5/0.902)*t**(1/0.902))
         
     def MMS1PS_simulation_loop_multisim(self, max_sim_time, concurency_limit: int, model_type = 'mbf'):
         t, na, c1, c2 = 0, 0, 0, 0
@@ -267,7 +267,7 @@ class SimulationModel():
         is a concave quadratic continuous function in the R2 space
         """
         t = np.linspace(0,work_day_hours,work_day_hours*60*60)
-        demand = -3*t*(t-work_day_hours)
+        demand = -15*t*(t-work_day_hours)
         return demand
 
     def generate_abandoment(self, wait_time):
@@ -379,6 +379,34 @@ class Servers:
     def generate_idle_flag(self, t):
         if self.concurrent_chats == 0:
             self.idle_time.append(int(t/60))
+
+class Shift:
+
+    def __init__(self):
+        """
+        The input class will assign each of the arrays used to store the labour
+        required for a shift.
+        """
+
+        self.BTSPORT = pd.DataFrame()
+        self.MACOMP = pd.DataFrame()
+        self.MAENQ = pd.DataFrame()
+        self.MOBILE = pd.DataFrame()
+        self.REPAIR = pd.DataFrame()
+        self.TMO = pd.DataFrame()
+
+    def create_default_shift(self):
+        """
+
+        :return:
+        """
+        self.BTSPORT.from_csv("tvsportshift.csv")
+        self.MACOMP.from_csv("macompshift.csv")
+        self.MAENQ.from_csv("maenqshift.csv")
+        self.MOBILE.from_csv("mobileshift.csv")
+        self.REPAIR.from_csv("repairshift.csv")
+        self.TMO.from_csv("TMOshift.csv")
+
 
 
 

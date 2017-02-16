@@ -48,7 +48,7 @@ plt.plot(x2, density2(x2), '-k', linewidth = 1.5)
 plt.plot(x3, density2(x2), '-b', linewidth = 1.5)
 
 t = np.linspace(0,18,18*60)
-demand = -7*t*(t-18)
+demand = -15*t*(t-18)
 plt.figure()
 plt.plot(t,demand)
 
@@ -89,16 +89,16 @@ plt.xlim(0.05,1)
 import scipy.stats 
 import pandas as pd
 import MMnPSQ
-sim = MMnPSQ.SimulationModel(30,160)
-Sims = [sim.MMS1PS_simulation_loop_multisim(64800,3) for i in range(100)]
+sim = MMnPSQ.SimulationModel(30, 600)
+Sims = [sim.MMS1PS_simulation_loop_multisim(64800,3) for i in range(3)]
 ls = []
 for i in range(0, len(Sims)):
     wt,st,ar,agents = Sims[i]
     d={'wait': wt, 'service': st, 'aband': ar, 'servers': agents }
     ls.append(d)
-df4 = pd.DataFrame(ls)
-print(df)
+df1 = pd.DataFrame(ls)
+print(df1)
 
 
 #single sim results 
-shift, hist = sim.MMS1PS_simulation_loop(64800,3)
+shift, hist = sim.MMS1PS_simulation_loop_singlesim(64800,3)
