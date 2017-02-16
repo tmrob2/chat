@@ -33,7 +33,7 @@ class SimulationModel():
         self.service_rate = service_rate
         self.server_count = server_count
         t = np.linspace(1,18*60,18*60)
-        self.survival = np.exp(-np.exp(-11.5/0.902)*t**(1/0.902))
+        self.survival = np.exp(-np.exp(-7.5/0.902)*t**(1/0.902))
         self.indiviuals_in_service = []
         
     def MMS1PS_simulation_loop_multisim(self, max_sim_time, concurency_limit: int, model_type = 'mbf'):
@@ -151,19 +151,31 @@ class SimulationModel():
 
     def MMS1PS_simulation_loop_singlesim(self, max_sim_time, concurency_limit: int, model_type = 'mbf'):
         t, na, c1, c2 = 0, 0, 0, 0
-
-        # generate a two server model
-        shift = [Servers(self.service_rate, i, concurency_limit) for i in range(self.server_count)]
-        # generate the first service time
-        t0 = rnd.expovariate(self.demand[5])*60.
+        t0 = rnd.expovariate(self.demand[5]) * 60.
         ta = t0
+        # generate a two server model
+        dt = pd.read_csv("overallshift.csv")
+        schedule = dt.query('start <= %s < end'%t0)['Mon'].values[0]
+
+        shift = [Servers(self.service_rate, i, concurency_limit) for i in range(schedule)]
+        # generate the first service time
 
         while t < max_sim_time:
             # loop through the servers to see who is the most busy but not reached their concurrency limit
-            agents = [(x.concurrent_chats, x.id) for x in shift if x.concurrent_chats < concurency_limit]
+            if dt.query('start <= %s < end'%t)['Mon'].values[0] - len(shift) >= 0:
+                for i in range((dt.query('start <= %s < end' % t)['Mon'].values[0] - len(shift))):
+                    shift.append(Servers(self.service_rate, i, concurency_limit))
+            elif dt.query('start <= %s < end'%t)['Mon'].values[0] - len(shift) < 0:
+                diff = dt.query('start <= %s < end'%t)['Mon'].values[0] - len(shift)
+                for i in range(int(math.fabs(diff))):
+                    shift[i].active = False
+
+            agents = [(x.concurrent_chats, x.id) for x in shift
+                      if x.concurrent_chats < concurency_limit and x.active is True]
 
             for i in shift:
-                i.generate_idle_flag(t)
+                if i.active:
+                    i.generate_idle_flag(t)
             
             # this could be zero length for which the person will be assigned to a queue and given a wait time
             
@@ -311,7 +323,8 @@ class SimulationModel():
             agents = [(x.concurrent_chats, x.id) for x in shift if x.concurrent_chats < concurency_limit]
 
             for i in shift:
-                i.generate_idle_flag(t)
+                if i.active:
+                    i.generate_idle_flag(t)
 
             # this could be zero length for which the person will be assigned to a queue and given a wait time
 
@@ -372,12 +385,12 @@ class SimulationModel():
         is a concave quadratic continuous function in the R2 space
         """
         t = np.linspace(0,work_day_hours,work_day_hours*60)
-        demand = -7*t*(t-work_day_hours)
+        demand = -15*t*(t-work_day_hours)
         return demand
 
     def generate_abandoment(self, wait_time):
         p = rnd.uniform(0,1)
-        if p > self.survival[int(wait_time)]:
+        if p > self.survival[int(wait_time/60)]:
             return True
         else:
             return False
@@ -497,6 +510,7 @@ class Shift:
         self.MOBILE = pd.read_csv("mobileshift.csv")
         self.REPAIR = pd.read_csv("repairshift.csv")
         self.TVSPORT = pd.read_csv("tvsportshift.csv")
+        self.overall = pd.read_csv("overallshift.csv")
 
 
 

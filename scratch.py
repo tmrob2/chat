@@ -48,7 +48,7 @@ plt.plot(x2, density2(x2), '-k', linewidth = 1.5)
 plt.plot(x3, density2(x2), '-b', linewidth = 1.5)
 
 t = np.linspace(0,18,18*60)
-demand = -7*t*(t-18)
+demand = -15*t*(t-18)
 plt.figure()
 plt.plot(t,demand)
 
@@ -105,4 +105,13 @@ print(df5)
 import pandas as pd
 import MMnPSQ
 sim = MMnPSQ.SimulationModel(30,180)
-shift, hist = sim.MMS1PS_simulation_loop_singlesim(64800,3)
+shift, hist = sim.MMS1PS_simulation_loop_singlesim(57600,3)
+
+
+import pandas as pd
+test = pd.read_csv('overallshift.csv')
+t0 = 0.0
+test.query('start <= %s <= end'%0.0)['Mon'].values[0]
+
+
+
