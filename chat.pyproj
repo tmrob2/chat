@@ -12,6 +12,9 @@
     <OutputPath>.</OutputPath>
     <Name>chat</Name>
     <RootNamespace>chat</RootNamespace>
+    <IsWindowsApplication>False</IsWindowsApplication>
+    <InterpreterId>{01dd5795-6e37-4932-ba80-24712443f196}</InterpreterId>
+    <InterpreterVersion>3.5</InterpreterVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <DebugSymbols>true</DebugSymbols>
@@ -23,6 +26,14 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="chat.py" />
+    <Compile Include="MMnPSQ.py" />
+    <Compile Include="scratch.py" />
+    <Compile Include="substitution.py">
+      <SubType>Code</SubType>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <InterpreterReference Include="{01dd5795-6e37-4932-ba80-24712443f196}\3.5" />
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
