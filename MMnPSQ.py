@@ -32,8 +32,9 @@ class SimulationModel():
         self.history = {}
         self.service_rate = service_rate
         self.server_count = server_count
-        t = np.linspace(1,18*60*60,18*60*60)
+        t = np.linspace(1,18*60,18*60)
         self.survival = np.exp(-np.exp(-11.5/0.902)*t**(1/0.902))
+        self.indiviuals_in_service = []
         
     def MMS1PS_simulation_loop_multisim(self, max_sim_time, concurency_limit: int, model_type = 'mbf'):
         t, na, c1, c2 = 0, 0, 0, 0
@@ -70,7 +71,7 @@ class SimulationModel():
                 if int(ta/60) < 5 or int(1080 - ta/60) < 5:
                     ta = rnd.expovariate(self.demand[5])*600. + t
                 else:
-                    ta = rnd.expovariate(self.demand[int(t)])*600. + t
+                    ta = rnd.expovariate(self.demand[int(t/60)])*600. + t
 
                 if len(agents) != 0:
                     # An agent has capacity to serve a customer
@@ -104,7 +105,7 @@ class SimulationModel():
                 # Ammend the system time
                 t = min_agent_ts
                 for i in shift:
-                    i.depart_customer_from_service_line(t)
+                    unused = i.depart_customer_from_service_line(t)
                 ls_ind_abd = []
                 for i in self.queue:
                     i.wait_time = t - i.arrival_time
@@ -130,7 +131,7 @@ class SimulationModel():
 
             ind_to_serve = self.queue.popleft()
             for i in shift:
-                i.depart_customer_from_service_line(t)
+                unused = i.depart_customer_from_service_line(t)
 
             agents = [(x.concurrent_chats, x.id) for x in shift if x.concurrent_chats < concurency_limit]
 
@@ -181,9 +182,9 @@ class SimulationModel():
                 self.history[ind.id] = ind
 
                 if int(ta/60) < 5 or int(1080 - ta/60) < 5:
-                    ta = rnd.expovariate(self.demand[5])*600. + t
+                    ta = rnd.expovariate(self.demand[5])*3600 + t
                 else:
-                    ta = rnd.expovariate(self.demand[int(t)])*600. + t
+                    ta = rnd.expovariate(self.demand[int(t/60)])*3600 + t
 
                 if len(agents) != 0:
                     # An agent has capacity to serve a customer
@@ -217,7 +218,7 @@ class SimulationModel():
                 # Ammend the system time
                 t = min_agent_ts
                 for i in shift:
-                    i.depart_customer_from_service_line(t)
+                    unused = i.depart_customer_from_service_line(t)
                 ls_ind_abd = []
                 for i in self.queue:
                     i.wait_time = t - i.arrival_time
@@ -243,7 +244,7 @@ class SimulationModel():
 
             ind_to_serve = self.queue.popleft()
             for i in shift:
-                i.depart_customer_from_service_line(t)
+                unused = i.depart_customer_from_service_line(t)
 
             agents = [(x.concurrent_chats, x.id) for x in shift if x.concurrent_chats < concurency_limit]
 
@@ -255,10 +256,114 @@ class SimulationModel():
             shift[agents[0][1]].add_to_queue(ind_to_serve, t)
 
         avg_wait_time = sum([self.history[i].wait_time for i in range(1,len(self.history))]) / len(self.history)
-        avg_service_time = sum([sum(i.server_times)/len(i.server_times) for i in shift])/len(shift)
+        avg_service_time = sum([sum(i.server_times)/len(i.server_times) if len(i.server_times) != 0 else 0. for i in shift])/len(shift)
         sum_ar = sum([self.history[i].abandoned for i in range(1,len(self.history))])/len([self.history[i].abandoned for i in range(1,len(self.history)) if self.history[i].abandoned == 0])
         return shift, self.history
         #return avg_wait_time, avg_service_time, sum_ar, self.server_count
+
+    def MMSMPS_simulation_loop_single_sim(self, max_sim_time, concurency_limit: int, model_type = 'mbf'):
+        """
+
+        :param max_sim_time:
+        :param concurrency_limits:
+        :param model_type:
+        :return:
+        """
+        t, na, c1, c2 = 0, 0, 0, 0
+
+        # generate a shift pattern
+        shift = Shift()
+        tvsport = deque()
+        # generate the first service time
+        t0 = rnd.expovariate(self.demand[5]) * 60.
+        ta = t0
+
+        TVSPORT = deque()
+        TMO = deque()
+        MACOMP = deque()
+        MAENQ = deque()
+        MOBILE = deque()
+        REPAIR = deque()
+
+        while t < max_sim_time:
+
+            for i in range((shift.TVSPORT.query('start < %s < end' % t0) - len(TVSPORT))):
+                TVSPORT.append(Servers(self.service_rate, i, concurency_limit))
+
+            for i in range((shift.TMO.query('start < %s < end' % t0) - len(TMO))):
+                TMO.append(Servers(self.service_rate, i, concurency_limit))
+
+            for i in range((shift.MACOMP.query('start < %s < end' % t0) - len(MACOMP))):
+                MACOMP.append(Servers(self.service_rate, i, concurency_limit))
+
+            for i in range((shift.MAENQ.query('start < %s < end' % t0) - len(MAENQ))):
+                MAENQ.append(Servers(self.service_rate, i, concurency_limit))
+
+            for i in range((shift.MOBILE.query('start < %s < end' % t0) - len(MOBILE))):
+                MOBILE.append(Servers(self.service_rate, i, concurency_limit))
+
+            for i in range((shift.REPAIR.query('start < %s < end' % t0) - len(REPAIR))):
+                REPAIR.append(Servers(self.service_rate, i, concurency_limit))
+
+            # Loop through the servers to see who is the most busy but not reached their concurrency limit
+            # This will also have to be done by queue as well but we will be assigning people to agent
+            # queues instead of a global queue
+            agents = [(x.concurrent_chats, x.id) for x in shift if x.concurrent_chats < concurency_limit]
+
+            for i in shift:
+                i.generate_idle_flag(t)
+
+            # this could be zero length for which the person will be assigned to a queue and given a wait time
+
+            if model_type == 'mbf':
+                agents.sort(key=operator.itemgetter(0), reverse=True)
+            else:
+                agents.sort(key=operator.itemgetter(0))
+
+            min_agent_ts = min([x.min_service_time() if len(x.service) != 0 else math.inf for x in shift])
+
+            if ta == min(min_agent_ts, ta):
+                # add another individual
+                na += 1
+                t = ta
+                ind = Individuals(t, na)
+                self.history[ind.id] = ind
+                self.indiviuals_in_service.append(ind)
+
+                # Generate the demand at time t
+
+            else:
+
+                # Ammend the system time
+                t = min_agent_ts
+                for i in shift:
+                    i_to_remove = i.depart_customer_from_service_line(t)
+                    self.indiviuals_in_service = [i for i in self.indiviuals_in_service
+                                                  if i.id not in i_to_remove]
+
+
+        while len(self.queue) != 0:
+
+            # this could be zero length for which the person will be assigned to a
+            # queue and given a wait time
+
+            min_agent_ts = min([x.min_service_time() if len(x.service) != 0
+                                else math.inf for x in shift])
+            t = min_agent_ts
+            ls_ind_abd = []
+
+            ind_to_serve = self.queue.popleft()
+            for i in shift:
+                i.depart_customer_from_service_line(t)
+
+            agents = [(x.concurrent_chats, x.id) for x in shift if x.concurrent_chats < concurency_limit]
+
+            if model_type == 'mbf':
+                agents.sort(key=operator.itemgetter(0), reverse=True)
+            else:
+                agents.sort(key=operator.itemgetter(0))
+
+            shift[agents[0][1]].add_to_queue(ind_to_serve, t)
 
     def generate_demand(self, work_day_hours: int):
         """
@@ -266,7 +371,7 @@ class SimulationModel():
         Returns a list of demand of discrete time intervals (minutes)
         is a concave quadratic continuous function in the R2 space
         """
-        t = np.linspace(0,work_day_hours,work_day_hours*60*60)
+        t = np.linspace(0,work_day_hours,work_day_hours*60)
         demand = -7*t*(t-work_day_hours)
         return demand
 
@@ -349,6 +454,7 @@ class Servers:
         self.id = id
         self.concurrency_measure = []
         self.conc_lim = conc_lim
+        self.active = True
 
     def add_to_queue(self, ind: Individuals, t):
         self.server_queue.append(ind)
@@ -374,11 +480,24 @@ class Servers:
 
     def depart_customer_from_service_line(self,t):
         self.service = {k:v for k,v in self.service.items() if v['ts'] != t}
+        ind_to_remove = [k for k,v in self.service.items() if v['ts'] == t]
         self.concurrent_chats = len(self.service)
+        return ind_to_remove
 
     def generate_idle_flag(self, t):
         if self.concurrent_chats == 0:
             self.idle_time.append(int(t/60))
+
+class Shift:
+
+    def __init__(self):
+        self.TMO = pd.read_csv("TMOshift.csv")
+        self.MACOMP = pd.read_csv("macompshift.csv")
+        self.MAENQ = pd.read_csv("maenqshift.csv")
+        self.MOBILE = pd.read_csv("mobileshift.csv")
+        self.REPAIR = pd.read_csv("repairshift.csv")
+        self.TVSPORT = pd.read_csv("tvsportshift.csv")
+
 
 
 

@@ -101,5 +101,8 @@ df5.to_csv("df_400.csv")
 print(df5)
 
 
-#single sim results 
+#single sim results
+import pandas as pd
+import MMnPSQ
+sim = MMnPSQ.SimulationModel(30,180)
 shift, hist = sim.MMS1PS_simulation_loop_singlesim(64800,3)
