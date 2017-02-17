@@ -89,24 +89,27 @@ plt.xlim(0.05,1)
 import scipy.stats 
 import pandas as pd
 import MMnPSQ
-sim = MMnPSQ.SimulationModel(30,400)
-Sims = [sim.MMS1PS_simulation_loop_multisim(64800,3) for i in range(10)]
+sim = MMnPSQ.SimulationModel(20,180)
+Sims = [sim.MMS1PS_simulation_loop_multisim(57600,2) for i in range(3)]
 ls = []
 for i in range(0, len(Sims)):
     wt,st,ar,agents,ans = Sims[i]
     d={'wait': wt, 'service': st, 'aband': ar, 'servers': agents, 'answered': ans}
     ls.append(d)
-df5 = pd.DataFrame(ls)
-df5.to_csv("df_400.csv")
-print(df5)
+df1 = pd.DataFrame(ls)
+df1.to_csv("df_180.csv")
+print(df1)
 
 
 #single sim results
 import pandas as pd
 import MMnPSQ
-sim = MMnPSQ.SimulationModel(30,180)
+sim = MMnPSQ.SimulationModel(25,180)
 shift, hist = sim.MMS1PS_simulation_loop_singlesim(57600,2)
 
+import MMnPSQ
+sim = MMnPSQ.SimulationModel(25,180)
+shift, hist = sim.MMSMPS_simulation_loop_single_sim(57600, 2)
 
 import pandas as pd
 test = pd.read_csv('overallshift.csv')

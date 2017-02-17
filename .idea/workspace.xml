@@ -8,6 +8,7 @@
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/staff_idle_hours.png" afterPath="$PROJECT_DIR$/staff_idle_hours.png" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/MMnPSQ.py" afterPath="$PROJECT_DIR$/MMnPSQ.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/df_180.csv" afterPath="$PROJECT_DIR$/df_180.csv" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/scratch.py" afterPath="$PROJECT_DIR$/scratch.py" />
     </list>
     <ignored path="chat.iws" />
@@ -28,21 +29,33 @@
   </component>
   <component name="FileEditorManager">
     <leaf>
-      <file leaf-file-name="MMnPSQ.py" pinned="false" current-in-tab="true">
+      <file leaf-file-name="MMnPSQ.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/MMnPSQ.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="54">
-              <caret line="167" column="0" selection-start-line="167" selection-start-column="0" selection-end-line="167" selection-end-column="0" />
+            <state relative-caret-position="345">
+              <caret line="350" column="4" selection-start-line="350" selection-start-column="4" selection-end-line="365" selection-end-column="24" />
               <folding>
                 <element signature="e#88#99#0" expanded="true" />
-                <element signature="e#1009#6071#0" expanded="false" />
-                <element signature="e#12335#16272#0" expanded="false" />
-                <element signature="e#16334#16679#0" expanded="false" />
-                <element signature="e#16907#17147#0" expanded="false" />
-                <element signature="e#17190#17688#0" expanded="false" />
-                <element signature="e#17728#18145#0" expanded="false" />
-                <element signature="e#18192#18578#0" expanded="false" />
-                <marker date="1487263367000" expanded="false" signature="558:887" ph="..." />
+                <element signature="e#8134#15028#0" expanded="false" />
+                <element signature="e#15090#15435#0" expanded="false" />
+                <element signature="e#15491#15620#0" expanded="false" />
+                <element signature="e#15660#15876#0" expanded="false" />
+                <element signature="e#15919#16417#0" expanded="false" />
+                <element signature="e#16457#16874#0" expanded="false" />
+                <element signature="e#16921#17307#0" expanded="false" />
+                <marker date="1487355502000" expanded="false" signature="1000:8019" ph="..." />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="MMnnPSQ.py" pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/MMnnPSQ.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="293">
+              <caret line="87" column="35" selection-start-line="87" selection-start-column="35" selection-end-line="87" selection-end-column="35" />
+              <folding>
+                <element signature="e#0#11#0" expanded="true" />
               </folding>
             </state>
           </provider>
@@ -51,8 +64,8 @@
       <file leaf-file-name="scratch.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/scratch.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="245">
-              <caret line="108" column="0" selection-start-line="104" selection-start-column="0" selection-end-line="107" selection-end-column="59" />
+            <state relative-caret-position="230">
+              <caret line="110" column="18" selection-start-line="109" selection-start-column="0" selection-end-line="111" selection-end-column="61" />
               <folding>
                 <element signature="e#89#102#0" expanded="true" />
               </folding>
@@ -61,6 +74,13 @@
         </entry>
       </file>
     </leaf>
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Python Script" />
+      </list>
+    </option>
   </component>
   <component name="Git.Settings">
     <option name="UPDATE_TYPE" value="MERGE" />
@@ -71,6 +91,7 @@
       <list>
         <option value="$PROJECT_DIR$/scratch.py" />
         <option value="$PROJECT_DIR$/MMnPSQ.py" />
+        <option value="$PROJECT_DIR$/MMnnPSQ.py" />
       </list>
     </option>
   </component>
@@ -112,7 +133,7 @@
     </panes>
   </component>
   <component name="PropertiesComponent">
-    <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
+    <property name="settings.editor.selected.configurable" value="preferences.externalTools" />
     <property name="settings.editor.splitter.proportion" value="0.2" />
     <property name="last_opened_file_path" value="$PROJECT_DIR$" />
     <property name="FullScreen" value="true" />
@@ -263,6 +284,9 @@
   <component name="ShelveChangesManager" show_recycled="false">
     <option name="remove_strategy" value="false" />
   </component>
+  <component name="SvnConfiguration">
+    <configuration />
+  </component>
   <component name="TaskManager">
     <task active="true" id="Default" summary="Default task">
       <changelist id="5ceae5d5-17fe-48a9-ac3a-84464b63a179" name="Default" comment="" />
@@ -277,7 +301,7 @@
     <frame x="-1440" y="0" width="1440" height="900" extended-state="0" />
     <editor active="true" />
     <layout>
-      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25040388" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25035766" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="9" side_tool="false" content_ui="tabs" />
       <window_info id="Messages" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="-1" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32876712" sideWeight="0.5" order="0" side_tool="true" content_ui="tabs" />
@@ -285,9 +309,9 @@
       <window_info id="Python Console" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.44849786" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
-      <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32970297" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
+      <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32891566" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="-1" side_tool="true" content_ui="tabs" />
-      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
+      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Hierarchy" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="2" side_tool="false" content_ui="combo" />
       <window_info id="Message" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
@@ -310,23 +334,10 @@
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
-      <breakpoints>
-        <line-breakpoint enabled="true" type="python-line">
-          <condition expression="t &gt; 30000" language="Python" />
-          <url>file://$PROJECT_DIR$/MMnPSQ.py</url>
-          <line>179</line>
-          <option name="timeStamp" value="149" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="python-line">
-          <url>file://$PROJECT_DIR$/MMnPSQ.py</url>
-          <line>255</line>
-          <option name="timeStamp" value="151" />
-        </line-breakpoint>
-      </breakpoints>
       <breakpoints-dialog>
         <breakpoints-dialog />
       </breakpoints-dialog>
-      <option name="time" value="152" />
+      <option name="time" value="216" />
     </breakpoint-manager>
     <watches-manager>
       <configuration name="Python Console Debugger">
@@ -335,14 +346,6 @@
     </watches-manager>
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$USER_HOME$/anaconda/lib/python3.5/site-packages/IPython/core/interactiveshell.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="192">
-          <caret line="2884" column="0" selection-start-line="2884" selection-start-column="0" selection-end-line="2884" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$USER_HOME$/anaconda/lib/python3.5/random.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="156">
@@ -351,10 +354,18 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$USER_HOME$/anaconda/lib/python3.5/site-packages/IPython/core/interactiveshell.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="197">
+          <caret line="2887" column="0" selection-start-line="2887" selection-start-column="0" selection-end-line="2887" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/scratch.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="245">
-          <caret line="108" column="0" selection-start-line="104" selection-start-column="0" selection-end-line="107" selection-end-column="59" />
+        <state relative-caret-position="230">
+          <caret line="110" column="18" selection-start-line="109" selection-start-column="0" selection-end-line="111" selection-end-column="61" />
           <folding>
             <element signature="e#89#102#0" expanded="true" />
           </folding>
@@ -363,18 +374,28 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/MMnPSQ.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="54">
-          <caret line="167" column="0" selection-start-line="167" selection-start-column="0" selection-end-line="167" selection-end-column="0" />
+        <state relative-caret-position="345">
+          <caret line="350" column="4" selection-start-line="350" selection-start-column="4" selection-end-line="365" selection-end-column="24" />
           <folding>
             <element signature="e#88#99#0" expanded="true" />
-            <element signature="e#1009#6071#0" expanded="false" />
-            <element signature="e#12335#16272#0" expanded="false" />
-            <element signature="e#16334#16679#0" expanded="false" />
-            <element signature="e#16907#17147#0" expanded="false" />
-            <element signature="e#17190#17688#0" expanded="false" />
-            <element signature="e#17728#18145#0" expanded="false" />
-            <element signature="e#18192#18578#0" expanded="false" />
-            <marker date="1487263367000" expanded="false" signature="558:887" ph="..." />
+            <element signature="e#8134#15028#0" expanded="false" />
+            <element signature="e#15090#15435#0" expanded="false" />
+            <element signature="e#15491#15620#0" expanded="false" />
+            <element signature="e#15660#15876#0" expanded="false" />
+            <element signature="e#15919#16417#0" expanded="false" />
+            <element signature="e#16457#16874#0" expanded="false" />
+            <element signature="e#16921#17307#0" expanded="false" />
+            <marker date="1487355502000" expanded="false" signature="1000:8019" ph="..." />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/MMnnPSQ.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="293">
+          <caret line="87" column="35" selection-start-line="87" selection-start-column="35" selection-end-line="87" selection-end-column="35" />
+          <folding>
+            <element signature="e#0#11#0" expanded="true" />
           </folding>
         </state>
       </provider>
