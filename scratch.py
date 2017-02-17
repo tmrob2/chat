@@ -105,7 +105,7 @@ print(df5)
 import pandas as pd
 import MMnPSQ
 sim = MMnPSQ.SimulationModel(30,180)
-shift, hist = sim.MMS1PS_simulation_loop_singlesim(57600,3)
+shift, hist = sim.MMS1PS_simulation_loop_singlesim(57600,2)
 
 
 import pandas as pd

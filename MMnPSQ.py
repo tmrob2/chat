@@ -150,28 +150,34 @@ class SimulationModel():
         return avg_wait_time, avg_service_time, sum_ar, self.server_count, sum_chats_answered
 
     def MMS1PS_simulation_loop_singlesim(self, max_sim_time, concurency_limit: int, model_type = 'mbf'):
+        s_id = 0
         t, na, c1, c2 = 0, 0, 0, 0
         t0 = rnd.expovariate(self.demand[5]) * 60.
         ta = t0
+        id_active = 0
         # generate a two server model
         dt = pd.read_csv("overallshift.csv")
         schedule = dt.query('start <= %s < end'%t0)['Mon'].values[0]
 
         shift = [Servers(self.service_rate, i, concurency_limit) for i in range(schedule)]
+        s_id = 46
         # generate the first service time
 
         while t < max_sim_time:
             # loop through the servers to see who is the most busy but not reached their concurrency limit
-            if dt.query('start <= %s < end'%t)['Mon'].values[0] - len(shift) >= 0:
-                for i in range((dt.query('start <= %s < end' % t)['Mon'].values[0] - len(shift))):
-                    shift.append(Servers(self.service_rate, i, concurency_limit))
+            if dt.query('start <= %s < end'%t)['Mon'].values[0] - 1 - len(shift) >= 0:
+                diff = dt.query('start <= %s < end' % t)['Mon'].values[0] -1 - len(shift)
+                for i in range(0,diff):
+                    shift.append(Servers(self.service_rate, s_id, concurency_limit))
+                    s_id += 1
             elif dt.query('start <= %s < end'%t)['Mon'].values[0] - len(shift) < 0:
                 diff = dt.query('start <= %s < end'%t)['Mon'].values[0] - len(shift)
                 for i in range(int(math.fabs(diff))):
-                    shift[i].active = False
+                    shift[id_active].active = False
+                    id_active += 1
 
-            agents = [(x.concurrent_chats, x.id) for x in shift
-                      if x.concurrent_chats < concurency_limit and x.active is True]
+
+            agents = [(x.concurrent_chats, x.id) for x in shift if x.concurrent_chats < concurency_limit if x.active is True]
 
             for i in shift:
                 if i.active:
@@ -205,7 +211,11 @@ class SimulationModel():
                         self.queue.append(ind)
                     else:
                         ind_to_serve = ind
-                    shift[agents[0][1]].add_to_queue(ind_to_serve, t)
+                    for i in shift:
+                        if i.id == agents[0][1]:
+                            i.add_to_queue(ind_to_serve, t)
+                            break
+
                     ls_ind_abd = []
                     for i in self.queue:
                         i.wait_time = t - i.arrival_time
@@ -230,7 +240,7 @@ class SimulationModel():
                 # Ammend the system time
                 t = min_agent_ts
                 for i in shift:
-                    unused = i.depart_customer_from_service_line(t)
+                    i.depart_customer_from_service_line(t)
                 ls_ind_abd = []
                 for i in self.queue:
                     i.wait_time = t - i.arrival_time
@@ -256,16 +266,19 @@ class SimulationModel():
 
             ind_to_serve = self.queue.popleft()
             for i in shift:
-                unused = i.depart_customer_from_service_line(t)
+                i.depart_customer_from_service_line(t)
 
-            agents = [(x.concurrent_chats, x.id) for x in shift if x.concurrent_chats < concurency_limit]
+            agents = [(x.concurrent_chats, x.id) for x in shift if x.concurrent_chats < concurency_limit if x.active is not False]
 
             if model_type == 'mbf':
                 agents.sort(key=operator.itemgetter(0), reverse=True)
             else:
                 agents.sort(key=operator.itemgetter(0))
 
-            shift[agents[0][1]].add_to_queue(ind_to_serve, t)
+            for i in shift:
+                if i.id == agents[0][1]:
+                    i.add_to_queue(ind_to_serve, t)
+                    break
 
         avg_wait_time = sum([self.history[i].wait_time for i in range(1,len(self.history))]) / len(self.history)
         avg_service_time = sum([sum(i.server_times)/len(i.server_times) if len(i.server_times) != 0 else 0. for i in shift])/len(shift)
@@ -470,10 +483,7 @@ class Servers:
         self.active = True
 
     def add_to_queue(self, ind: Individuals, t):
-        self.server_queue.append(ind)
-        
-        if self.concurrent_chats <= self.conc_lim:
-            self.add_to_service_line(ind, t)
+        self.add_to_service_line(ind, t)
             
     def add_to_service_line(self, ind: Individuals, t):
         t_exp = rnd.expovariate(1 / self.mean_service_time)*60.
@@ -492,10 +502,8 @@ class Servers:
         return m
 
     def depart_customer_from_service_line(self,t):
-        self.service = {k:v for k,v in self.service.items() if v['ts'] != t}
-        ind_to_remove = [k for k,v in self.service.items() if v['ts'] == t]
+        self.service = {k:v for k,v in self.service.items() if v['ts'] > t}
         self.concurrent_chats = len(self.service)
-        return ind_to_remove
 
     def generate_idle_flag(self, t):
         if self.concurrent_chats == 0:
