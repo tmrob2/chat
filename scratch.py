@@ -107,14 +107,15 @@ import MMnPSQ
 sim = MMnPSQ.SimulationModel(25,180)
 shift, hist = sim.MMS1PS_simulation_loop_singlesim(57600,2)
 
-import MMnPSQ
-sim = MMnPSQ.SimulationModel(25,180)
-shift, hist = sim.MMSMPS_simulation_loop_single_sim(57600, 2)
+import MMnnPSQ
+sim = MMnnPSQ.SimulationModel(25,180)
+shift, hist = sim.MMSNPS_simulation_loop_singlesim(57600, 2)
 
 import pandas as pd
 test = pd.read_csv('overallshift.csv')
 t0 = 0.0
 test.query('start <= %s <= end'%0.0)['Mon'].values[0]
+
 
 
 

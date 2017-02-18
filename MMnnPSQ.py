@@ -5,6 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import operator
 from collections import deque
+import sys
 
 
 class Individuals():
@@ -27,7 +28,7 @@ class SimulationModel():
         self.survival = np.exp(-np.exp(-9.5 / 0.902) * t ** (1 / 0.902))
         self.indiviuals_in_service = []
 
-    def MMS1PS_simulation_loop_singlesim(self, max_sim_time, concurency_limit: int, model_type = 'mbf'):
+    def MMSNPS_simulation_loop_singlesim(self, max_sim_time, concurency_limit: int, model_type = 'mbf'):
 
         s_id = 0
         t, na, c1, c2 = 0, 0, 0, 0
@@ -55,9 +56,43 @@ class SimulationModel():
                     shift[id_active].active = False
                     id_active += 1
 
-            shift.sort(key=lambda x: (x.concurrency, x.service)
+            applicable_shift = [agent for agent in shift if agent.active is True]
+            applicable_shift.sort(key=lambda x: (-x.concurrency, x.min_td - t))
+            min_agent_ts = min([agent.min_td for agent in shift])
 
             if ta == min(min_agent_ts, ta):
+                # The generated time interval is less than the next service time
+         
+                # Add another individual
+                na += 1
+                t = ta
+                ind = Individuals(t, na)
+                self.history[ind.id] = ind
+
+                if int(ta / 60) < 5 or int(1080 - ta / 60) < 5:
+                    ta = rnd.expovariate(self.demand[5]) * 3600 + t
+                else:
+                    ta = rnd.expovariate(self.demand[int(t / 60)]) * 3600 + t
+
+                applicable_shift[0].add_to_queue(ind, t)
+
+            else: 
+                # The generated time interval is greater than the generated time
+                t = min_agent_ts
+                # an agent in the shift will process the person in the service line
+                agents_w_deps = [agent for agent in shift if agent.min_td == t]
+
+        min_queue = min([len(agent.queue) for agent in shift])
+        while min_queue > 0:
+            min_td = [agent.min_td for agent in shift]
+            t = min_td
+            agents_with_qs = [agent for agent in shift if len(agent.queue) > 0]
+
+            for agent in agents_with_qs:
+                agent.depart_from_service_line(t)
+
+            min_queue = min([len(agent.queue) for agent in shift])
+            
 
     def generate_demand(self, work_day_hours: int):
         """
@@ -79,8 +114,6 @@ class SimulationModel():
 class Servers:
 
     def __init__(self, mean_ts, id, conc_lim):
-        self.t_arrive = []
-        self.t_depart = []
         self.service_times_history = []
         self.concurrency = 0
         self.c_lim = conc_lim
@@ -96,16 +129,19 @@ class Servers:
             for i in range(self.concurrency, self.c_lim):
                 if len(self.queue) > 0:
                     customer = self.queue.popleft()
-                    customer.departure_time = t + int(rnd.expovariate(1/self.mean_ts))*60
-                    self.service_line.append()
+                    t_service = int(rnd.expovariate(1/self.mean_ts))*60
+                    self.service_times_history.append(t_service)
+                    customer.departure_time = t + t_service
+                    self.service_line.append(customer)
                     self.concurrency += 1
                 else:
                     self.service_line.append(ind)
                     self.concurrency += 1
         else:
             self.queue.append(ind)
+
         self.get_min_departure_time()
-        self.calculate_wait_time()
+        self.calculate_wait_time(t)
 
     def calculate_wait_time(self, t):
         for i in self.queue:
@@ -117,4 +153,24 @@ class Servers:
             if i.departure_time < min_time:
                 min_time = i.departure_time
         self.min_td = min_time
+
+    def depart_from_service_line(self, t):
+        for i in self.service_line:
+            if i.departure_time == t:
+                self.service_line.remove(i)
+                if self.queue.__len__() > 0:
+                    customer = self.queue.popleft()
+                    customer.departure_time = t + int(rnd.expovariate(1/self.mean_ts))*60
+                    self.service_line.append(customer)
+        self.get_min_departure_time()
+        self.calculate_wait_time(t)
+
+def main():
+    import MMnnPSQ
+    sim = MMnnPSQ.SimulationModel(25,180)
+    shift, hist = sim.MMSNPS_simulation_loop_singlesim(57600, 2)
+    return shift, hist
+
+if __name__ == "main":
+    sys.exit(int(main() or 0))
 
