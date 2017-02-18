@@ -26,6 +26,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="chat.py" />
+    <Compile Include="MMnnPSQ.py" />
     <Compile Include="MMnPSQ.py" />
     <Compile Include="scratch.py" />
     <Compile Include="substitution.py">

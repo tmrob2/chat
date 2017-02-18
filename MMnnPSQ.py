@@ -1,0 +1,262 @@
+import math
+import random as rnd
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import operator
+from collections import deque
+import sys
+
+
+class Individuals():
+    def __init__(self, arrival_time, id):
+        self.arrival_time = arrival_time
+        self.id = id
+        self.wait_time = 0.
+        self.departure_time = 0.
+        self.abandoned = 0
+
+
+class SimulationModel():
+    def __init__(self, service_rate, server_count):
+        self.queue = deque()
+        self.demand = self.generate_demand(18)
+        self.history = {}
+        self.service_rate = service_rate
+        self.server_count = server_count
+        t = np.linspace(1, 10000, 10000)
+        self.survival = np.exp(-np.exp(-7.5 / 0.902) * t ** (1 / 0.902))
+        self.indiviuals_in_service = []
+
+    def MMSNPS_simulation_loop_singlesim(self, max_sim_time, concurency_limit: int, model_type = 'mbf'):
+
+        s_id = 0
+        t, na, c1, c2 = 0, 0, 0, 0
+        t0 = rnd.expovariate(self.demand[5]) * 60.
+        ta = t0
+        id_active = 0
+        # generate a two server model
+        dt = pd.read_csv("overallshift.csv")
+        schedule = dt.query('start <= %s < end' % t0)['Mon'].values[0]
+
+        shift = [Servers(self.service_rate, i, concurency_limit) for i in range(schedule)]
+        s_id = 46
+        # generate the first service time
+
+        while t < max_sim_time:
+            # loop through the servers to see who is the most busy but not reached their concurrency limit
+            if dt.query('start <= %s < end' % t)['Mon'].values[0] - 1 - len(shift) >= 0:
+                diff = dt.query('start <= %s < end' % t)['Mon'].values[0] - 1 - len(shift)
+                for i in range(0, diff):
+                    shift.append(Servers(self.service_rate, s_id, concurency_limit))
+                    s_id += 1
+            elif dt.query('start <= %s < end' % t)['Mon'].values[0] - len(shift) + id_active < 0:
+                diff = dt.query('start <= %s < end' % t)['Mon'].values[0] - len(shift) + id_active
+                for i in range(int(math.fabs(diff))):
+                    shift[id_active].active = False
+                    id_active += 1
+
+            applicable_shift = [agent for agent in shift if agent.active is True]
+            applicable_shift.sort(key=lambda x: (x.min_next_service, -x.concurrency))
+            min_agent_ts = min([agent.min_td for agent in shift])
+
+            if ta == min(min_agent_ts, ta):
+                # The generated time interval is less than the next service time
+
+                # Compute the agent idle time
+                self.compute_idle_time(applicable_shift, ta, t)
+                # Add another individual
+                na += 1
+                t = ta
+                ind = Individuals(t, na)
+                self.history[ind.id] = ind
+
+                if int(ta / 60) < 5 or int(1080 - ta / 60) < 5:
+                    ta = rnd.expovariate(self.demand[5]) * 3600 + t
+                else:
+                    ta = rnd.expovariate(self.demand[int(t / 60)]) * 3600 + t
+
+                applicable_shift[0].add_to_queue(ind, t, self.survival)
+
+            else: 
+                # The generated time interval is greater than the generated time
+                t = min_agent_ts
+                # an agent in the shift will process the person in the service line
+                [agent.depart_from_service_line(t, self.survival) for agent in shift if agent.min_td == t]
+
+        min_queue = min([len(agent.queue) for agent in shift])
+        while min_queue > 0:
+            min_td = [agent.min_td for agent in shift]
+
+            #Compute the agent idle time
+            self.compute_idle_time(shift, min_td, t)
+
+            t = min_td
+            agents_with_qs = [agent for agent in shift if len(agent.queue) > 0]
+
+            for agent in agents_with_qs:
+                agent.depart_from_service_line(t, self.survival)
+
+            min_queue = min([len(agent.queue) for agent in shift])
+
+        return shift, self.history
+
+    def compute_idle_time(self, shift, t1, t0):
+        for agent in shift:
+            if agent.concurrency == 0 and agent.active is True:
+                agent.idle += (t1-t0)
+                agent.idle_time.append(t1)
+
+    def generate_demand(self, work_day_hours: int):
+        """
+        Generates a workday expectation of volume offered to servers
+        Returns a list of demand of discrete time intervals (minutes)
+        is a concave quadratic continuous function in the R2 space
+        """
+        t = np.linspace(0, work_day_hours, work_day_hours * 60)
+        demand = -10 * t * (t - work_day_hours)
+        return demand
+
+    def plot_wait_time(self):
+        wt = []
+        for i in range(1,len(self.history)):
+            if self.history[i].wait_time != 0:
+                wt.append(self.history[i].wait_time)
+        plt.figure()
+        plt.hist(wt, 100)
+        return 1
+
+    def plot_service_time(self):
+        st = []
+        dt = []
+        for i in range(1, len(self.history)):
+            st.append(self.history[i].arrival_time)
+            if self.history[i].departure_time != 0:
+                dt.append(self.history[i].departure_time)
+
+        plt.figure()
+        plt.hist(st, 50)
+        plt.title('Arrival Time')
+        plt.savefig("arrival_time_sim_output.png")
+
+        plt.figure()
+        plt.hist(dt,50)
+        plt.title('Departure Time')
+        plt.savefig("departure_time_sim_output.png")
+
+    def plot_abandoned(self):
+        ab = []
+        not_ab = []
+        for i in range(1, len(self.history)):
+            if self.history[i].abandoned == 1:
+                ab.append(self.history[i].arrival_time)
+            else:
+                not_ab.append(self.history[i].arrival_time)
+
+        plt.figure()
+        p1 = plt.hist([ab, not_ab],50,stacked = True)
+        plt.title('Abandonment Count')
+        plt.savefig("sim_abandonment_rate.png")
+
+    def plot_idle_hist(self, shift):
+        idle = []
+        for i in shift:
+            for j in i.idle_time:
+                idle.append(j)
+        plt.figure()
+        bins = 50
+        n, x, _ = plt.hist(idle, bins, normed=1, alpha=0.75)
+        plt.figure()
+        plt.plot(x[:-1], n*bins)
+        plt.title('Count of agents idle at time t')
+        plt.savefig("staff_idle_hours.png")
+        return n, x
+
+class Servers:
+
+    def __init__(self, mean_ts, id, conc_lim):
+        self.service_times_history = []
+        self.concurrency = 0
+        self.c_lim = conc_lim
+        self.queue = deque()
+        self.service_line = deque()
+        self.active = True
+        self.mean_ts = mean_ts
+        self.min_td = math.inf
+        self.min_next_service = 0
+        self.idle = 0.
+        self.idle_time = []
+        self.conc_measure = 0.
+
+    def add_to_queue(self, ind: Individuals, t, survival):
+        # Append a customer to the queue straight away
+        self.queue.append(ind)
+        # If the agent has capacity the queue will be processed
+        while len(self.queue) > 0 and self.concurrency < self.c_lim:
+            customer = self.queue.popleft()
+            t_service = int(rnd.expovariate(1/self.mean_ts))*60
+            self.service_times_history.append(t_service)
+            customer.departure_time = t + t_service
+            self.conc_measure += customer.departure_time - customer.arrival_time
+            self.service_line.append(customer)
+            self.concurrency += 1
+
+        self.get_min_departure_time()
+        ls_ab = self.calculate_wait_time(t, survival)
+
+        for cust in ls_ab:
+            self.queue.remove(cust)
+
+    def calculate_wait_time(self, t, survival):
+        ls_abandoned = []
+        for i in self.queue:
+            i.wait_time = t - i.arrival_time
+            if self.generate_abandoment(i.wait_time, survival) is True:
+                ls_abandoned.append(i)
+                i.abandoned = 1
+        return ls_abandoned
+
+    def get_min_departure_time(self):
+        min_time = math.inf
+        next_service = 0
+        for i in self.service_line:
+            if i.departure_time < min_time:
+                min_time = i.departure_time
+
+            if i.departure_time > next_service:
+                next_service = i.departure_time
+        self.min_td = min_time
+        self.min_next_service = next_service
+
+    def depart_from_service_line(self, t, survival):
+        ls_remove = []
+        ls_append = []
+        for i in self.service_line:
+            if i.departure_time == t:
+                ls_remove.append(i)
+                self.concurrency -= 1
+        while self.queue.__len__() > 0 and self.concurrency < self.c_lim:
+            customer = self.queue.popleft()
+            customer.departure_time = t + int(rnd.expovariate(1/self.mean_ts))*60
+            ls_append.append(customer)
+        [self.service_line.remove(i) for i in ls_remove]
+        for i in ls_append:
+            self.concurrency += 1
+            self.service_line.append(i)
+        self.get_min_departure_time()
+        ls_ab = self.calculate_wait_time(t, survival)
+
+        for cust in ls_ab:
+            self.queue.remove(cust)
+
+    def generate_idle_flag(self, t):
+        if self.concurrency == 0:
+            self.idle_time.append(int(t/60))
+
+    def generate_abandoment(self, wait_time, survival):
+        p = rnd.uniform(0,1)
+        if p > survival[int(wait_time)]:
+            return True
+        else:
+            return False
+
