@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import operator
 from collections import deque
 import sys
-
+from scipy import stats
 
 class Individuals():
     def __init__(self, arrival_time, id):
@@ -37,7 +37,81 @@ class SimulationModel():
         id_active = 0
         # generate a two server model
         dt = pd.read_csv("overallshift.csv")
-        schedule = dt.query('start <= %s < end' % t0)['Mon'].values[0]
+        day_of_week = 'Sat'
+        schedule = dt.query('start <= %s < end' % t0)[day_of_week].values[0]
+
+        shift = [Servers(self.service_rate, i, concurency_limit) for i in range(schedule)]
+        s_id = 46
+        # generate the first service time
+
+        while t < max_sim_time:
+            # loop through the servers to see who is the most busy but not reached their concurrency limit
+            if dt.query('start <= %s < end' % t)[day_of_week].values[0] - 1 - len(shift) >= 0:
+                diff = dt.query('start <= %s < end' % t)[day_of_week].values[0] - 1 - len(shift)
+                for i in range(0, diff):
+                    shift.append(Servers(self.service_rate, s_id, concurency_limit))
+                    s_id += 1
+            elif dt.query('start <= %s < end' % t)[day_of_week].values[0] - len(shift) + id_active < 0:
+                diff = dt.query('start <= %s < end' % t)[day_of_week].values[0] - len(shift) + id_active
+                for i in range(int(math.fabs(diff))):
+                    shift[id_active].active = False
+                    id_active += 1
+
+            applicable_shift = [agent for agent in shift if agent.active is True]
+            applicable_shift.sort(key=lambda x: (x.min_next_service, -x.concurrency))
+            min_agent_ts = min([agent.min_td for agent in shift])
+
+            if ta == min(min_agent_ts, ta):
+                # The generated time interval is less than the next service time
+
+                # Compute the agent idle time
+                self.compute_idle_time(applicable_shift, ta, t)
+                # Add another individual
+                na += 1
+                t = ta
+                ind = Individuals(t, na)
+                self.history[ind.id] = ind
+
+                if int(ta / 60) < 5 or int(1080 - ta / 60) < 5:
+                    ta = rnd.expovariate(self.demand[5]) * 3600 + t
+                else:
+                    ta = rnd.expovariate(self.demand[int(t / 60)]) * 3600 + t
+
+                applicable_shift[0].add_to_queue(ind, t, self.survival)
+
+            else: 
+                # The generated time interval is greater than the generated time
+                t = min_agent_ts
+                # an agent in the shift will process the person in the service line
+                [agent.depart_from_service_line(t, self.survival) for agent in shift if agent.min_td == t]
+
+        min_queue = min([len(agent.queue) for agent in shift])
+        while min_queue > 0:
+            min_td = [agent.min_td for agent in shift]
+
+            #Compute the agent idle time
+            self.compute_idle_time(shift, min_td, t)
+
+            t = min_td
+            agents_with_qs = [agent for agent in shift if len(agent.queue) > 0]
+
+            for agent in agents_with_qs:
+                agent.depart_from_service_line(t, self.survival)
+
+            min_queue = min([len(agent.queue) for agent in shift])
+
+        return shift, self.history
+
+    def MMSNPS_simulation_loop_singlesim_seg_qs(self, max_sim_time, concurency_limit: int, model_type = 'mbf'):
+
+        s_id = 0
+        t, na, c1, c2 = 0, 0, 0, 0
+        t0 = rnd.expovariate(self.demand[5]) * 60.
+        ta = t0
+        id_active = 0
+        # generate a two server model
+        dt = pd.read_csv("overallshift.csv")
+        schedule = dt.query('start <= %s < end' % t0)['Fri'].values[0]
 
         shift = [Servers(self.service_rate, i, concurency_limit) for i in range(schedule)]
         s_id = 46
@@ -100,6 +174,85 @@ class SimulationModel():
             min_queue = min([len(agent.queue) for agent in shift])
 
         return shift, self.history
+    
+    def MMSNPS_simulation_loop_multisim(self, max_sim_time, concurency_limit: int, model_type = 'mbf'):
+        s_id = 0
+        t, na, c1, c2 = 0, 0, 0, 0
+        t0 = rnd.expovariate(self.demand[5]) * 60.
+        ta = t0
+        id_active = 0
+        # generate a two server model
+        day_of_week = 'Mon'
+        dt = pd.read_csv("overallshift.csv")
+        schedule = dt.query('start <= %s < end' % t0)[day_of_week].values[0]
+
+        shift = [Servers(self.service_rate, i, concurency_limit) for i in range(schedule)]
+        s_id = 46
+        # generate the first service time
+
+        while t < max_sim_time:
+            # loop through the servers to see who is the most busy but not reached their concurrency limit
+            if dt.query('start <= %s < end' % t)[day_of_week].values[0] - 1 - len(shift) >= 0:
+                diff = dt.query('start <= %s < end' % t)[day_of_week].values[0] - 1 - len(shift)
+                for i in range(0, diff):
+                    shift.append(Servers(self.service_rate, s_id, concurency_limit))
+                    s_id += 1
+            elif dt.query('start <= %s < end' % t)[day_of_week].values[0] - len(shift) + id_active < 0:
+                diff = dt.query('start <= %s < end' % t)[day_of_week].values[0] - len(shift) + id_active
+                for i in range(int(math.fabs(diff))):
+                    shift[id_active].active = False
+                    id_active += 1
+
+            applicable_shift = [agent for agent in shift if agent.active is True]
+            applicable_shift.sort(key=lambda x: (x.min_next_service, -x.concurrency))
+            min_agent_ts = min([agent.min_td for agent in shift])
+
+            if ta == min(min_agent_ts, ta):
+                # The generated time interval is less than the next service time
+
+                # Compute the agent idle time
+                self.compute_idle_time(applicable_shift, ta, t)
+                # Add another individual
+                na += 1
+                t = ta
+                ind = Individuals(t, na)
+                self.history[ind.id] = ind
+
+                if int(ta / 60) < 5 or int(1080 - ta / 60) < 5:
+                    ta = rnd.expovariate(self.demand[5]) * 3600 + t
+                else:
+                    ta = rnd.expovariate(self.demand[int(t / 60)]) * 3600 + t
+
+                applicable_shift[0].add_to_queue(ind, t, self.survival)
+
+            else: 
+                # The generated time interval is greater than the generated time
+                t = min_agent_ts
+                # an agent in the shift will process the person in the service line
+                [agent.depart_from_service_line(t, self.survival) for agent in shift if agent.min_td == t]
+
+        min_queue = min([len(agent.queue) for agent in shift])
+        while min_queue > 0:
+            min_td = [agent.min_td for agent in shift]
+
+            #Compute the agent idle time
+            self.compute_idle_time(shift, min_td, t)
+
+            t = min_td
+            agents_with_qs = [agent for agent in shift if len(agent.queue) > 0]
+
+            for agent in agents_with_qs:
+                agent.depart_from_service_line(t, self.survival)
+
+            min_queue = min([len(agent.queue) for agent in shift])
+
+        avg_wait_time = np.average([self.history[i].wait_time for i in range(1,len(self.history))if self.history[i].wait_time != 0.]) 
+        median_wait_time = np.median([self.history[i].wait_time for i in range(1,len(self.history)) if self.history[i].wait_time != 0.])
+        max_wait_time = np.max([self.history[i].wait_time for i in range(1,len(self.history))])
+        avg_service_time = np.average([np.average(i.service_times_history) for i in shift])
+        avg_ar = np.average([self.history[i].abandoned for i in range(1,len(self.history))])
+        sum_chats_answered = sum([1 for i in range(1,len(self.history)) if self.history[i].abandoned == 0 if self.history[i].departure_time > 0])
+        return avg_wait_time, median_wait_time, max_wait_time, avg_service_time, avg_ar, sum_chats_answered
 
     def compute_idle_time(self, shift, t1, t0):
         for agent in shift:
@@ -260,3 +413,4 @@ class Servers:
         else:
             return False
 
+        
