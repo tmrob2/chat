@@ -33,7 +33,7 @@ class SimulationModel():
         self.service_rate = service_rate
         self.server_count = server_count
         t = np.linspace(1,10000,10000)
-        self.survival = np.exp(-np.exp(-9.5/0.902)*t**(1/0.902))
+        self.survival = np.exp(-np.exp(-7.5/0.902)*t**(1/0.902))
         self.indiviuals_in_service = []
         
     def MMS1PS_simulation_loop_multisim(self, max_sim_time, concurency_limit: int, model_type = 'mbf'):

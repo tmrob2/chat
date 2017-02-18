@@ -107,14 +107,71 @@ import MMnPSQ
 sim = MMnPSQ.SimulationModel(25,180)
 shift, hist = sim.MMS1PS_simulation_loop_singlesim(57600,2)
 
+# Multi server multi queue model
 import MMnnPSQ
-sim = MMnnPSQ.SimulationModel(25,180)
+sim = MMnnPSQ.SimulationModel(30,180)
 shift, hist = sim.MMSNPS_simulation_loop_singlesim(57600, 2)
+print('finished')
 
 import pandas as pd
 test = pd.read_csv('overallshift.csv')
 t0 = 0.0
 test.query('start <= %s <= end'%0.0)['Mon'].values[0]
+
+def plot_wait_time(history):
+    wt = []
+    for i in range(1, len(history)):
+        if history[i].wait_time != 0:
+            wt.append(history[i].wait_time)
+    plt.figure()
+    plt.hist(wt, 100)
+    return 1
+
+def plot_service_time(self):
+    st = []
+    dt = []
+    for i in range(1, len(self.history)):
+        st.append(self.history[i].arrival_time)
+        if self.history[i].departure_time != 0:
+            dt.append(self.history[i].departure_time)
+
+    plt.figure()
+    plt.hist(st, 50)
+    plt.title('Arrival Time')
+    plt.savefig("arrival_time_sim_output.png")
+
+    plt.figure()
+    plt.hist(dt, 50)
+    plt.title('Departure Time')
+    plt.savefig("departure_time_sim_output.png")
+
+def plot_abandoned(self):
+    ab = []
+    not_ab = []
+    for i in range(1, len(self.history)):
+        if self.history[i].abandoned == 1:
+            ab.append(self.history[i].arrival_time)
+        else:
+            not_ab.append(self.history[i].arrival_time)
+
+    plt.figure()
+    p1 = plt.hist([ab, not_ab], 50, stacked=True)
+    plt.title('Abandonment Count')
+    plt.savefig("sim_abandonment_rate.png")
+
+def plot_idle_hist(shift):
+    idle = []
+    for i in shift:
+        for j in i.idle_time:
+            idle.append(j)
+    plt.figure()
+    bins = 50
+    n, x, _ = plt.hist(idle, bins, normed=1, alpha=0.75)
+    plt.figure()
+    plt.plot(x[:-1], n * bins)
+    plt.title('Count of agents idle at time t')
+    plt.savefig("staff_idle_hours.png")
+    return n, x
 
 
 
