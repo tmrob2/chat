@@ -111,7 +111,7 @@ class SimulationModel():
         ta = t0
         id_active = 0
         # generate a two server model
-        day_of_week = 'Sat'
+        day_of_week = 'Tue'
         dt = pd.read_csv("overallshift.csv")
         schedule = dt.query('start <= %s < end' % t0)[day_of_week].values[0]
         shift = []
@@ -225,8 +225,14 @@ class SimulationModel():
                     count += 1
             
             # Generate the problems here
-            p = [0.,0.354,0.654,0.797,0.897,0.976,1.]
-            r = rnd.uniform(0,1)
+            p = [0., 0.354, 0.654, 0.797, 0.897, 0.976, 1.]
+
+            if 50400 < t < 54000:
+                r = rnd.uniform(0, 0.976)
+            elif t < 7200 or t > 54000:
+                r = rnd.uniform(0, 0.897)
+
+
             l = ['rep','maenq','tvsport','mob','tmo','macomp']
             w_type = l[self.generate_random_sample_index(r,p)]
             
