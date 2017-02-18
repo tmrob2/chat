@@ -486,16 +486,7 @@ class Servers:
                     m = v['ts']
             self.min_s_t = m
 
-class Shift:
 
-    def __init__(self):
-        self.TMO = pd.read_csv("TMOshift.csv")
-        self.MACOMP = pd.read_csv("macompshift.csv")
-        self.MAENQ = pd.read_csv("maenqshift.csv")
-        self.MOBILE = pd.read_csv("mobileshift.csv")
-        self.REPAIR = pd.read_csv("repairshift.csv")
-        self.TVSPORT = pd.read_csv("tvsportshift.csv")
-        self.overall = pd.read_csv("overallshift.csv")
 
 
 

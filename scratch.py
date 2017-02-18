@@ -133,3 +133,12 @@ df1 = pd.DataFrame(ls)
 df1.to_csv("df_180.csv")
 print(df1)
 
+r = random.uniform(0,1)
+p = [0.,0.354,0.654,0.797,0.897,0.976,1.]
+
+import MMnnPSQ
+sim = MMnnPSQ.SimulationModel(30,180)
+shift, hist = sim.MMSNPS_simulation_loop_singlesim_seg_qs(57600, 2)
+print('finished')
+
+
