@@ -111,7 +111,7 @@ class SimulationModel():
         ta = t0
         id_active = 0
         # generate a two server model
-        day_of_week = 'Fri'
+        day_of_week = 'Mon'
         dt = pd.read_csv("overallshift.csv")
         schedule = dt.query('start <= %s < end' % t0)[day_of_week].values[0]
         shift_changes = deque([3600, 7200, 18000, 21600, 25200, 32400, 36000, 39600, 50400, 54000, 57600])
@@ -555,7 +555,7 @@ class SimulationModel():
         is a concave quadratic continuous function in the R2 space
         """
         t = np.linspace(0, work_day_hours, work_day_hours * 60)
-        demand = -25 * t * (t - work_day_hours)
+        demand = -10 * t * (t - work_day_hours)
         return demand
 
     def plot_wait_time(self, filename):
