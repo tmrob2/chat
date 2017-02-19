@@ -367,7 +367,7 @@ class SimulationModel():
         ta = t0
         id_active = 0
         # generate a two server model
-        day_of_week = 'Sat'
+        day_of_week = 'Sun'
         dt = pd.read_csv("overallshift.csv")
         schedule = dt.query('start <= %s < end' % t0)[day_of_week].values[0]
         shift_changes = deque([3600, 7200, 18000, 21600, 25200, 32400, 36000, 39600, 50400, 54000, 57600])
