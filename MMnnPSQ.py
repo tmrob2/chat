@@ -114,6 +114,7 @@ class SimulationModel():
         day_of_week = 'Tue'
         dt = pd.read_csv("overallshift.csv")
         schedule = dt.query('start <= %s < end' % t0)[day_of_week].values[0]
+        shift_changes = deque([3600, 7200, 18000, 21600, 25200, 32400, 36000, 39600, 50400, 54000, 57600])
         shift = []
         #Create the roster schedules
         working_roster = Shift()
@@ -148,7 +149,7 @@ class SimulationModel():
         tmo_offline = 0
         while t < max_sim_time:
             
-            if t < 32400 and self.shift_change(t) == True:
+            if t < 32400 and self.shift_change(t, shift_changes) is True:
                 tmo_first_shift = working_roster.TMO.query('start <= %s < end' % t)[day_of_week].values[0]
                 macomp_first_shift = working_roster.MACOMP.query('start <= %s < end' % t)[day_of_week].values[0]
                 maenq_first_shift = working_roster.MAENQ.query('start <= %s < end' % t)[day_of_week].values[0]
@@ -180,7 +181,7 @@ class SimulationModel():
                     s_id += 1
                     shift.append(Servers(self.service_rate, s_id, concurency_limit, worker_type = 'tvsport'))
 
-            elif t >= 32400 and self.shift_change(t) == True:
+            elif t >= 32400 and self.shift_change(t, shift_changes) is True:
                 tmo_delta = working_roster.TMO.query('start <= %s < end' % t)[day_of_week].values[0]
                 macomp_delta = working_roster.MACOMP.query('start <= %s < end' % t)[day_of_week].values[0]
                 maenq_delta = working_roster.MAENQ.query('start <= %s < end' % t)[day_of_week].values[0]
@@ -190,51 +191,48 @@ class SimulationModel():
 
                 tmo = [i for i in shift if i.worker_type == 'tmo' if i.active is True]
                 count = 0
-                while count < tmo_delta:
-                    i.active = False
+                while count < math.fabs(tmo_delta):
+                    tmo[count].active = False
                     count += 1
 
-                macomp = [i for i in shift if i.worker_type == 'tmo' if i.active is True]
+                macomp = [i for i in shift if i.worker_type == 'macomp' if i.active is True]
                 count = 0
-                while count < macomp_delta:
-                    i.active = False
+                while count < math.fabs(macomp_delta):
+                    macomp[count].active = False
                     count += 1
 
-                maenq = [i for i in shift if i.worker_type == 'tmo' if i.active is True]
+                maenq = [i for i in shift if i.worker_type == 'maenq' if i.active is True]
                 count = 0
-                while count < maenq_delta:
-                    i.active = False
+                while count < math.fabs(maenq_delta):
+                    maenq[count].active = False
                     count += 1
 
-                mobile = [i for i in shift if i.worker_type == 'tmo' if i.active is True]
+                mobile = [i for i in shift if i.worker_type == 'mob' if i.active is True]
                 count = 0
-                while count < mobile_delta:
-                    i.active = False
+                while count < math.fabs(mobile_delta):
+                    mobile[count].active = False
                     count += 1
 
-                repair = [i for i in shift if i.worker_type == 'tmo' if i.active is True]
+                repair = [i for i in shift if i.worker_type == 'rep' if i.active is True]
                 count = 0
-                while count < repair_delta:
-                    i.active = False
+                while count < math.fabs(repair_delta):
+                    repair[count].active = False
                     count += 1
 
-                tvsport = [i for i in shift if i.worker_type == 'tmo' if i.active is True]
+                tvsport = [i for i in shift if i.worker_type == 'tvsport' if i.active is True]
                 count = 0
-                while count < tvsport_delta:
-                    i.active = False
+                while count < math.fabs(tvsport_delta):
+                    tvsport[count].active = False
                     count += 1
             
             # Generate the problems here
             p = [0., 0.354, 0.654, 0.797, 0.897, 0.976, 1.]
 
-            if 50400 < t < 54000:
-                r = rnd.uniform(0, 0.976)
-            elif t < 7200 or t > 54000:
+            if t < 7200 or t > 50400:
                 r = rnd.uniform(0, 0.897)
 
-
-            l = ['rep','maenq','tvsport','mob','tmo','macomp']
-            w_type = l[self.generate_random_sample_index(r,p)]
+            l = ['rep', 'maenq', 'tvsport', 'mob', 'tmo', 'macomp']
+            w_type = l[self.generate_random_sample_index(r, p)]
             
             applicable_shift = [agent for agent in shift if agent.active is True if agent.worker_type == w_type]
             applicable_shift.sort(key=lambda x: (x.min_next_service, -x.concurrency))
@@ -433,8 +431,8 @@ class SimulationModel():
         plt.savefig("staff_idle_hours.png")
         return n, x
 
-    def shift_change(self, t):
-        new_shift_times = deque([3600,7200,18000,21600,25200,32400,36000,39600,50400,54000])
+    def shift_change(self, t, times):
+        new_shift_times = times
         if t > new_shift_times[0]:
             new_shift_times.popleft()
             return True

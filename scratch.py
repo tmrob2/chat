@@ -104,12 +104,12 @@ print(df1)
 #single sim results
 import pandas as pd
 import MMnPSQ
-sim = MMnPSQ.SimulationModel(25,180)
+sim = MMnPSQ.SimulationModel(20,180)
 shift, hist = sim.MMS1PS_simulation_loop_singlesim(57600,2)
 
 # Multi server multi queue model
 import MMnnPSQ
-sim = MMnnPSQ.SimulationModel(30,180)
+sim = MMnnPSQ.SimulationModel(20,180)
 shift, hist = sim.MMSNPS_simulation_loop_singlesim(57600, 2)
 print('finished')
 
