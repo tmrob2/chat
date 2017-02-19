@@ -38,7 +38,7 @@ class SimulationModel():
         id_active = 0
         # generate a two server model
         dt = pd.read_csv("overallshift.csv")
-        day_of_week = 'Sat'
+        day_of_week = 'Tues'
         schedule = dt.query('start <= %s < end' % t0)[day_of_week].values[0]
 
         shift = [Servers(self.service_rate, i, concurency_limit) for i in range(schedule)]
@@ -376,16 +376,19 @@ class SimulationModel():
         demand = -10 * t * (t - work_day_hours)
         return demand
 
-    def plot_wait_time(self):
+    def plot_wait_time(self, filename):
         wt = []
         for i in range(1,len(self.history)):
             if self.history[i].wait_time != 0:
                 wt.append(self.history[i].wait_time)
         plt.figure()
-        plt.hist(wt, 100)
+        plt.hist(wt, 100, color = "blueviolet")
+        plt.xlabel("Seconds")
+        plt.ylabel("Count")
+        plt.savefig("%s.png"%filename)
         return 1
 
-    def plot_service_time(self):
+    def plot_service_time(self, fnarr, fndepart):
         st = []
         dt = []
         for i in range(1, len(self.history)):
@@ -394,16 +397,20 @@ class SimulationModel():
                 dt.append(self.history[i].departure_time)
 
         plt.figure()
-        plt.hist(st, 50)
+        plt.hist(st, 50, color = 'blueviolet')
         plt.title('Arrival Time')
-        plt.savefig("arrival_time_sim_output.png")
+        plt.xlabel("Seconds")
+        plt.ylabel("Count")
+        plt.savefig("%s.png"%fnarr)
 
         plt.figure()
-        plt.hist(dt,50)
+        plt.hist(dt,50, color = 'mediumorchid')
         plt.title('Departure Time')
-        plt.savefig("departure_time_sim_output.png")
+        plt.xlabel("Seconds")
+        plt.ylabel("Count")
+        plt.savefig("%s.png"%fndepart)
 
-    def plot_abandoned(self):
+    def plot_abandoned(self, filename):
         ab = []
         not_ab = []
         for i in range(1, len(self.history)):
@@ -413,22 +420,26 @@ class SimulationModel():
                 not_ab.append(self.history[i].arrival_time)
 
         plt.figure()
-        p1 = plt.hist([ab, not_ab],50,stacked = True)
+        p1 = plt.hist([ab, not_ab],50, color = ['darkslateblue','mediumorchid'], 
+                      label = ['abandoned','answered'], stacked = True)
+        plt.legend(loc = "best")
         plt.title('Abandonment Count')
-        plt.savefig("sim_abandonment_rate.png")
+        plt.xlabel("Seconds")
+        plt.ylabel("Count")
+        plt.savefig("%s.png"%filename)
 
-    def plot_idle_hist(self, shift):
+    def plot_idle_hist(self, shift, filename):
         idle = []
         for i in shift:
             for j in i.idle_time:
                 idle.append(j)
         plt.figure()
         bins = 50
-        n, x, _ = plt.hist(idle, bins, normed=1, alpha=0.75)
+        n, x, _ = plt.hist(idle, bins, color = 'blueviolet', normed=1, alpha=0.75)
         plt.figure()
-        plt.plot(x[:-1], n*bins)
+        plt.plot(x[:-1], n*bins, color = 'blueviolet')
         plt.title('Count of agents idle at time t')
-        plt.savefig("staff_idle_hours.png")
+        plt.savefig("%s.png"%filename)
         return n, x
 
     def shift_change(self, t, times):

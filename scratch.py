@@ -101,16 +101,24 @@ df1.to_csv("df_180.csv")
 print(df1)
 
 
-#single sim results
+# Single queue multiple servers cross skilled
 import pandas as pd
 import MMnPSQ
 sim = MMnPSQ.SimulationModel(20,180)
 shift, hist = sim.MMS1PS_simulation_loop_singlesim(57600,2)
-
-# Multi server multi queue model
+sim.plot_abandoned("mult_q_mult_server_q")
+sim.plot_service_time("mqms_arrival_times", "mqms_depart_times")
+sim.plot_idle_hist(shift,"mqms_agent_idle")
+sim.plot_wait_time("mqms_cust_wait")
+print('finished')
+# Multi server with queues cross skilled
 import MMnnPSQ
 sim = MMnnPSQ.SimulationModel(20,180)
 shift, hist = sim.MMSNPS_simulation_loop_singlesim(57600, 2)
+sim.plot_abandoned("mult_q_mult_server_q")
+sim.plot_service_time("mqms_arrival_times", "mqms_depart_times")
+sim.plot_idle_hist(shift,"mqms_agent_idle")
+sim.plot_wait_time("mqms_cust_wait")
 print('finished')
 
 import pandas as pd
@@ -118,6 +126,7 @@ test = pd.read_csv('overallshift.csv')
 t0 = 0.0
 test.query('start <= %s <= end'%0.0)['Mon'].values[0]
 
+# multi simulation 
 import scipy.stats 
 import pandas as pd
 import MMnnPSQ
@@ -136,9 +145,14 @@ print(df1)
 r = random.uniform(0,1)
 p = [0.,0.354,0.654,0.797,0.897,0.976,1.]
 
+# multiple service queues with agent queues not cross skilled
 import MMnnPSQ
-sim = MMnnPSQ.SimulationModel(30,180)
+sim = MMnnPSQ.SimulationModel(20,180)
 shift, hist = sim.MMSNPS_simulation_loop_singlesim_seg_qs(57600, 2)
+sim.plot_abandoned("mult_q_mult_server_q")
+sim.plot_service_time("mqms_arrival_times", "mqms_depart_times")
+sim.plot_idle_hist(shift,"mqms_agent_idle")
+sim.plot_wait_time("mqms_cust_wait")
 print('finished')
 
 

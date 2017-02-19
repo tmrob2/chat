@@ -44,7 +44,7 @@ class SimulationModel():
         id_active = 0
         # generate a two server model
         dt = pd.read_csv("overallshift.csv")
-        schedule = dt.query('start <= %s < end' % t0)['Mon'].values[0]
+        schedule = dt.query('start <= %s < end' % t0)['Sat'].values[0]
 
         shift = [Servers(self.service_rate, i, concurency_limit) for i in range(schedule)]
         s_id = 46
@@ -199,9 +199,10 @@ class SimulationModel():
         t0 = rnd.expovariate(self.demand[5]) * 60.
         ta = t0
         id_active = 0
+        day_of_week = "Sat"
         # generate a two server model
         dt = pd.read_csv("overallshift.csv")
-        schedule = dt.query('start <= %s < end'%t0)['Mon'].values[0]
+        schedule = dt.query('start <= %s < end'%t0)[day_of_week].values[0]
 
         shift = [Servers(self.service_rate, i, concurency_limit) for i in range(schedule)]
         s_id = 46
@@ -209,13 +210,13 @@ class SimulationModel():
 
         while t < max_sim_time:
             # loop through the servers to see who is the most busy but not reached their concurrency limit
-            if dt.query('start <= %s < end'%t)['Mon'].values[0] - 1 - len(shift) >= 0:
-                diff = dt.query('start <= %s < end' % t)['Mon'].values[0] -1 - len(shift)
+            if dt.query('start <= %s < end'%t)[day_of_week].values[0] - 1 - len(shift) >= 0:
+                diff = dt.query('start <= %s < end' % t)[day_of_week].values[0] -1 - len(shift)
                 for i in range(0,diff):
                     shift.append(Servers(self.service_rate, s_id, concurency_limit))
                     s_id += 1
-            elif dt.query('start <= %s < end'%t)['Mon'].values[0] - len(shift) + id_active< 0:
-                diff = dt.query('start <= %s < end'%t)['Mon'].values[0] - len(shift) + id_active
+            elif dt.query('start <= %s < end'%t)[day_of_week].values[0] - len(shift) + id_active< 0:
+                diff = dt.query('start <= %s < end'%t)[day_of_week].values[0] - len(shift) + id_active
                 for i in range(int(math.fabs(diff))):
                     shift[id_active].active = False
                     id_active += 1
@@ -365,16 +366,20 @@ class SimulationModel():
         else:
             return False
 
-    def plot_wait_time(self):
+    def plot_wait_time(self, filename):
         wt = []
         for i in range(1,len(self.history)):
             if self.history[i].wait_time != 0:
                 wt.append(self.history[i].wait_time)
         plt.figure()
-        plt.hist(wt, 100)
+        plt.hist(wt, 100, color = 'blueviolet')
+        plt.title("Distribution of Customer Wait Time in Queues")
+        plt.xlabel("Seconds")
+        plt.ylabel("Fequency")
+        plt.savefig("%s.png"%filename)
         return 1
 
-    def plot_service_time(self):
+    def plot_service_time(self, fn_arr, fn_depart):
         st = []
         dt = []
         for i in range(1, len(self.history)):
@@ -383,16 +388,20 @@ class SimulationModel():
                 dt.append(self.history[i].departure_time)
 
         plt.figure()
-        plt.hist(st, 50)
+        plt.hist(st, 50, color = 'darkslateblue')
         plt.title('Arrival Time')
-        plt.savefig("arrival_time_sim_output.png")
+        plt.xlabel("Seconds")
+        plt.ylabel("Count")
+        plt.savefig("%s.png"%fn_arr)
 
         plt.figure()
-        plt.hist(dt,50)
+        plt.hist(dt,50, color = 'mediumorchid')
         plt.title('Departure Time')
-        plt.savefig("departure_time_sim_output.png")
+        plt.xlabel("Seconds")
+        plt.ylabel("Count")
+        plt.savefig("%s.png"%fn_depart)
 
-    def plot_abandoned(self):
+    def plot_abandoned(self, filename):
         ab = []
         not_ab = []
         for i in range(1, len(self.history)):
@@ -402,22 +411,26 @@ class SimulationModel():
                 not_ab.append(self.history[i].arrival_time)
 
         plt.figure()
-        p1 = plt.hist([ab, not_ab],50,stacked = True)
-        plt.title('Abandonment Count')
-        plt.savefig("sim_abandonment_rate.png")
+        p1 = plt.hist([ab, not_ab],50,color = ['darkslateblue','mediumorchid'], stacked = True)
+        plt.title('Abandonment and Answered Chats')
+        plt.xlabel("Seconds")
+        plt.ylabel("Count")
+        plt.savefig("%s.png"%filename)
 
-    def plot_idle_hist(self, shift):
+    def plot_idle_hist(self, shift, filename):
         idle = []
         for i in shift:
             for j in i.idle_time:
                 idle.append(j)
         plt.figure()
         bins = 50
-        n, x, _ = plt.hist(idle, bins, normed=1, alpha=0.75)
+        n, x, _ = plt.hist(idle, bins, color = 'blueviolet', normed=1, alpha=0.75)
         plt.figure()
-        plt.plot(x[:-1], n*bins*self.server_count)
+        plt.plot(x[:-1], n*bins*self.server_count, color = 'blueviolet')
         plt.title('Count of agents idle at time t')
-        plt.savefig("staff_idle_hours.png")
+        plt.xlabel("Seconds")
+        plt.ylabel("Count")
+        plt.savefig("%s.png"%filename)
         return n, x
 
 class Servers:
