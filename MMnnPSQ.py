@@ -38,7 +38,7 @@ class SimulationModel():
         id_active = 0
         # generate a two server model
         dt = pd.read_csv("overallshift.csv")
-        day_of_week = 'Tues'
+        day_of_week = 'Sat'
         schedule = dt.query('start <= %s < end' % t0)[day_of_week].values[0]
 
         shift = [Servers(self.service_rate, i, concurency_limit) for i in range(schedule)]
@@ -111,7 +111,7 @@ class SimulationModel():
         ta = t0
         id_active = 0
         # generate a two server model
-        day_of_week = 'Tue'
+        day_of_week = 'Fri'
         dt = pd.read_csv("overallshift.csv")
         schedule = dt.query('start <= %s < end' % t0)[day_of_week].values[0]
         shift_changes = deque([3600, 7200, 18000, 21600, 25200, 32400, 36000, 39600, 50400, 54000, 57600])
@@ -288,7 +288,7 @@ class SimulationModel():
         ta = t0
         id_active = 0
         # generate a two server model
-        day_of_week = 'Mon'
+        day_of_week = 'Fri'
         dt = pd.read_csv("overallshift.csv")
         schedule = dt.query('start <= %s < end' % t0)[day_of_week].values[0]
 
@@ -359,6 +359,188 @@ class SimulationModel():
         avg_ar = np.average([self.history[i].abandoned for i in range(1,len(self.history))])
         sum_chats_answered = sum([1 for i in range(1,len(self.history)) if self.history[i].abandoned == 0 if self.history[i].departure_time > 0])
         return avg_wait_time, median_wait_time, max_wait_time, avg_service_time, avg_ar, sum_chats_answered
+    
+    def MMSNPS_simulation_loop_multisim_seg_qs(self, max_sim_time, concurency_limit: int, model_type = 'mbf'):
+        s_id = 0
+        t, na, c1, c2 = 0, 0, 0, 0
+        t0 = rnd.expovariate(self.demand[5]) * 60.
+        ta = t0
+        id_active = 0
+        # generate a two server model
+        day_of_week = 'Sat'
+        dt = pd.read_csv("overallshift.csv")
+        schedule = dt.query('start <= %s < end' % t0)[day_of_week].values[0]
+        shift_changes = deque([3600, 7200, 18000, 21600, 25200, 32400, 36000, 39600, 50400, 54000, 57600])
+        shift = []
+        #Create the roster schedules
+        working_roster = Shift()
+        tmo_first_shift = working_roster.TMO.query('start <= %s < end' % t0)[day_of_week].values[0]
+        macomp_first_shift = working_roster.MACOMP.query('start <= %s < end' % t0)[day_of_week].values[0]
+        maenq_first_shift = working_roster.MAENQ.query('start <= %s < end' % t0)[day_of_week].values[0]
+        mobile_first_shift = working_roster.MOBILE.query('start <= %s < end' % t0)[day_of_week].values[0]
+        repair_first_shift = working_roster.REPAIR.query('start <= %s < end' % t0)[day_of_week].values[0]
+        tvsport_first_shift = working_roster.TVSPORT.query('start <= %s < end' % t0)[day_of_week].values[0]
+
+        for i in range(tmo_first_shift):
+            shift.append(Servers(self.service_rate, i, concurency_limit, worker_type = 'tmo'))
+
+        for i in range(macomp_first_shift):
+            shift.append(Servers(self.service_rate, i, concurency_limit, worker_type = 'macomp'))
+
+        for i in range(maenq_first_shift):
+            shift.append(Servers(self.service_rate, i, concurency_limit, worker_type = 'maenq'))
+
+        for i in range(mobile_first_shift):
+            shift.append(Servers(self.service_rate, i, concurency_limit, worker_type = 'mob'))
+
+        for i in range(repair_first_shift):
+            shift.append(Servers(self.service_rate, i, concurency_limit, worker_type = 'rep'))
+
+        for i in range(tvsport_first_shift):
+            shift.append(Servers(self.service_rate, i, concurency_limit, worker_type = 'tvsport'))
+        
+        # generate the first service time
+        s_id = tmo_first_shift+macomp_first_shift+maenq_first_shift+mobile_first_shift+repair_first_shift+tvsport_first_shift
+        
+        tmo_offline = 0
+        while t < max_sim_time:
+            
+            if t < 32400 and self.shift_change(t, shift_changes) is True:
+                tmo_first_shift = working_roster.TMO.query('start <= %s < end' % t)[day_of_week].values[0]
+                macomp_first_shift = working_roster.MACOMP.query('start <= %s < end' % t)[day_of_week].values[0]
+                maenq_first_shift = working_roster.MAENQ.query('start <= %s < end' % t)[day_of_week].values[0]
+                mobile_first_shift = working_roster.MOBILE.query('start <= %s < end' % t)[day_of_week].values[0]
+                repair_first_shift = working_roster.REPAIR.query('start <= %s < end' % t)[day_of_week].values[0]
+                tvsport_first_shift = working_roster.TVSPORT.query('start <= %s < end' % t)[day_of_week].values[0]
+
+                for i in range(tmo_first_shift):
+                    s_id += 1
+                    shift.append(Servers(self.service_rate, s_id, concurency_limit, worker_type = 'tmo'))
+
+                for i in range(macomp_first_shift):
+                    s_id += 1
+                    shift.append(Servers(self.service_rate, s_id, concurency_limit, worker_type = 'macomp'))
+
+                for i in range(maenq_first_shift):
+                    s_id += 1
+                    shift.append(Servers(self.service_rate, s_id, concurency_limit, worker_type = 'maenq'))
+
+                for i in range(mobile_first_shift):
+                    s_id += 1
+                    shift.append(Servers(self.service_rate, s_id, concurency_limit, worker_type = 'mob'))
+
+                for i in range(repair_first_shift):
+                    s_id += 1
+                    shift.append(Servers(self.service_rate, s_id, concurency_limit, worker_type = 'rep'))
+
+                for i in range(tvsport_first_shift):
+                    s_id += 1
+                    shift.append(Servers(self.service_rate, s_id, concurency_limit, worker_type = 'tvsport'))
+
+            elif t >= 32400 and self.shift_change(t, shift_changes) is True:
+                tmo_delta = working_roster.TMO.query('start <= %s < end' % t)[day_of_week].values[0]
+                macomp_delta = working_roster.MACOMP.query('start <= %s < end' % t)[day_of_week].values[0]
+                maenq_delta = working_roster.MAENQ.query('start <= %s < end' % t)[day_of_week].values[0]
+                mobile_delta = working_roster.MOBILE.query('start <= %s < end' % t)[day_of_week].values[0]
+                repair_delta = working_roster.REPAIR.query('start <= %s < end' % t)[day_of_week].values[0]
+                tvsport_delta = working_roster.TVSPORT.query('start <= %s < end' % t)[day_of_week].values[0]
+
+                tmo = [i for i in shift if i.worker_type == 'tmo' if i.active is True]
+                count = 0
+                while count < math.fabs(tmo_delta):
+                    tmo[count].active = False
+                    count += 1
+
+                macomp = [i for i in shift if i.worker_type == 'macomp' if i.active is True]
+                count = 0
+                while count < math.fabs(macomp_delta):
+                    macomp[count].active = False
+                    count += 1
+
+                maenq = [i for i in shift if i.worker_type == 'maenq' if i.active is True]
+                count = 0
+                while count < math.fabs(maenq_delta):
+                    maenq[count].active = False
+                    count += 1
+
+                mobile = [i for i in shift if i.worker_type == 'mob' if i.active is True]
+                count = 0
+                while count < math.fabs(mobile_delta):
+                    mobile[count].active = False
+                    count += 1
+
+                repair = [i for i in shift if i.worker_type == 'rep' if i.active is True]
+                count = 0
+                while count < math.fabs(repair_delta):
+                    repair[count].active = False
+                    count += 1
+
+                tvsport = [i for i in shift if i.worker_type == 'tvsport' if i.active is True]
+                count = 0
+                while count < math.fabs(tvsport_delta):
+                    tvsport[count].active = False
+                    count += 1
+            
+            # Generate the problems here
+            p = [0., 0.354, 0.654, 0.797, 0.897, 0.976, 1.]
+
+            if t < 7200 or t > 50400:
+                r = rnd.uniform(0, 0.897)
+
+            l = ['rep', 'maenq', 'tvsport', 'mob', 'tmo', 'macomp']
+            w_type = l[self.generate_random_sample_index(r, p)]
+            
+            applicable_shift = [agent for agent in shift if agent.active is True if agent.worker_type == w_type]
+            applicable_shift.sort(key=lambda x: (x.min_next_service, -x.concurrency))
+            min_agent_ts = min([agent.min_td for agent in shift])
+
+            if ta == min(min_agent_ts, ta):
+                # The generated time interval is less than the next service time
+                
+                # Compute the agent idle time
+                self.compute_idle_time(applicable_shift, ta, t)
+                # Add another individual
+                na += 1
+                t = ta
+                ind = Individuals(t, na)
+                # Generate the individuals problem
+                self.history[ind.id] = ind
+                ind.enquiry = w_type
+
+                if int(ta / 60) < 5 or int(1080 - ta / 60) < 5:
+                    ta = rnd.expovariate(self.demand[5]) * 3600 + t
+                else:
+                    ta = rnd.expovariate(self.demand[int(t / 60)]) * 3600 + t
+
+                applicable_shift[0].add_to_queue(ind, t, self.survival)
+
+            else: 
+                # The generated time interval is greater than the generated time
+                t = min_agent_ts
+                # an agent in the shift will process the person in the service line
+                [agent.depart_from_service_line(t, self.survival) for agent in shift if agent.min_td == t]
+
+        min_queue = min([len(agent.queue) for agent in shift])
+        while min_queue > 0:
+            min_td = [agent.min_td for agent in shift]
+
+            #Compute the agent idle time
+            self.compute_idle_time(shift, min_td, t)
+
+            t = min_td
+            agents_with_qs = [agent for agent in shift if len(agent.queue) > 0]
+
+            for agent in agents_with_qs:
+                agent.depart_from_service_line(t, self.survival)
+
+            min_queue = min([len(agent.queue) for agent in shift])
+        avg_wait_time = np.average([self.history[i].wait_time for i in range(1,len(self.history))if self.history[i].wait_time != 0.]) 
+        median_wait_time = np.median([self.history[i].wait_time for i in range(1,len(self.history)) if self.history[i].wait_time != 0.])
+        max_wait_time = np.max([self.history[i].wait_time for i in range(1,len(self.history))])
+        avg_service_time = np.average([np.average(i.service_times_history) for i in shift])
+        avg_ar = np.average([self.history[i].abandoned for i in range(1,len(self.history))])
+        sum_chats_answered = sum([1 for i in range(1,len(self.history)) if self.history[i].abandoned == 0 if self.history[i].departure_time > 0])
+        return avg_wait_time, median_wait_time, max_wait_time, avg_service_time, avg_ar, sum_chats_answered
 
     def compute_idle_time(self, shift, t1, t0):
         for agent in shift:
@@ -373,7 +555,7 @@ class SimulationModel():
         is a concave quadratic continuous function in the R2 space
         """
         t = np.linspace(0, work_day_hours, work_day_hours * 60)
-        demand = -10 * t * (t - work_day_hours)
+        demand = -25 * t * (t - work_day_hours)
         return demand
 
     def plot_wait_time(self, filename):

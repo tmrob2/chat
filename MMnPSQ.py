@@ -43,8 +43,9 @@ class SimulationModel():
         ta = t0
         id_active = 0
         # generate a two server model
+        day_of_week = "Fri"
         dt = pd.read_csv("overallshift.csv")
-        schedule = dt.query('start <= %s < end' % t0)['Sat'].values[0]
+        schedule = dt.query('start <= %s < end' % t0)[day_of_week].values[0]
 
         shift = [Servers(self.service_rate, i, concurency_limit) for i in range(schedule)]
         s_id = 46
@@ -52,13 +53,13 @@ class SimulationModel():
 
         while t < max_sim_time:
             # loop through the servers to see who is the most busy but not reached their concurrency limit
-            if dt.query('start <= %s < end' % t)['Mon'].values[0] - 1 - len(shift) >= 0:
-                diff = dt.query('start <= %s < end' % t)['Mon'].values[0] - 1 - len(shift)
+            if dt.query('start <= %s < end' % t)[day_of_week].values[0] - 1 - len(shift) >= 0:
+                diff = dt.query('start <= %s < end' % t)[day_of_week].values[0] - 1 - len(shift)
                 for i in range(0, diff):
                     shift.append(Servers(self.service_rate, s_id, concurency_limit))
                     s_id += 1
-            elif dt.query('start <= %s < end' % t)['Mon'].values[0] - len(shift) + id_active < 0:
-                diff = dt.query('start <= %s < end' % t)['Mon'].values[0] - len(shift) + id_active
+            elif dt.query('start <= %s < end' % t)[day_of_week].values[0] - len(shift) + id_active < 0:
+                diff = dt.query('start <= %s < end' % t)[day_of_week].values[0] - len(shift) + id_active
                 for i in range(int(math.fabs(diff))):
                     shift[id_active].active = False
                     id_active += 1
@@ -186,12 +187,13 @@ class SimulationModel():
                     i.add_to_queue(ind_to_serve, t)
                     break
 
-        avg_wait_time = sum([self.history[i].wait_time for i in range(1,len(self.history))]) / len(self.history)
-        avg_service_time = sum([sum(i.server_times)/len(i.server_times) for i in shift])/len(shift)
-        sum_ar = sum([self.history[i].abandoned for i in range(1,len(self.history))])/len([self.history[i].abandoned for i in range(1,len(self.history)) if self.history[i].abandoned == 0])
-        sum_chats_answered = sum([1 for i in range(1,len(self.history)) if self.history[i].abandoned == 0])
-        #return shift, self.history
-        return avg_wait_time, avg_service_time, sum_ar, self.server_count, sum_chats_answered
+        avg_wait_time = np.average([self.history[i].wait_time for i in range(1,len(self.history))if self.history[i].wait_time != 0.]) 
+        median_wait_time = np.median([self.history[i].wait_time for i in range(1,len(self.history)) if self.history[i].wait_time != 0.])
+        max_wait_time = np.max([self.history[i].wait_time for i in range(1,len(self.history))])
+        avg_service_time = np.average([np.average(i.server_times) for i in shift])
+        avg_ar = np.average([self.history[i].abandoned for i in range(1,len(self.history))])
+        sum_chats_answered = sum([1 for i in range(1,len(self.history)) if self.history[i].abandoned == 0 if self.history[i].departure_time > 0])
+        return avg_wait_time, median_wait_time, max_wait_time, avg_service_time, avg_ar, sum_chats_answered
 
     def MMS1PS_simulation_loop_singlesim(self, max_sim_time, concurency_limit: int, model_type = 'mbf'):
         s_id = 0
@@ -199,7 +201,7 @@ class SimulationModel():
         t0 = rnd.expovariate(self.demand[5]) * 60.
         ta = t0
         id_active = 0
-        day_of_week = "Sat"
+        day_of_week = "Sun"
         # generate a two server model
         dt = pd.read_csv("overallshift.csv")
         schedule = dt.query('start <= %s < end'%t0)[day_of_week].values[0]
@@ -356,7 +358,7 @@ class SimulationModel():
         is a concave quadratic continuous function in the R2 space
         """
         t = np.linspace(0,work_day_hours,work_day_hours*60)
-        demand = -10*t*(t-work_day_hours)
+        demand = -25*t*(t-work_day_hours)
         return demand
 
     def generate_abandoment(self, wait_time):

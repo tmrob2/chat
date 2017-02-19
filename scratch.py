@@ -93,11 +93,12 @@ sim = MMnPSQ.SimulationModel(20,180)
 Sims = [sim.MMS1PS_simulation_loop_multisim(57600,2) for i in range(3)]
 ls = []
 for i in range(0, len(Sims)):
-    wt,st,ar,agents,ans = Sims[i]
-    d={'wait': wt, 'service': st, 'aband': ar, 'servers': agents, 'answered': ans}
+    avg_wait_time, median_wait_time, max_wait_time, avg_service_time, avg_ar, sum_chats_answered = Sims[i]
+    d={'wait': avg_wait_time,'med_wait': median_wait_time,'max_wait': max_wait_time, 
+       'service': avg_service_time, 'aband': avg_ar, 'answered': sum_chats_answered}
     ls.append(d)
 df1 = pd.DataFrame(ls)
-df1.to_csv("df_180.csv")
+df1.to_csv("sim_highvol_20perc_fte_saving.csv")
 print(df1)
 
 
@@ -106,19 +107,19 @@ import pandas as pd
 import MMnPSQ
 sim = MMnPSQ.SimulationModel(20,180)
 shift, hist = sim.MMS1PS_simulation_loop_singlesim(57600,2)
-sim.plot_abandoned("mult_q_mult_server_q")
-sim.plot_service_time("mqms_arrival_times", "mqms_depart_times")
-sim.plot_idle_hist(shift,"mqms_agent_idle")
-sim.plot_wait_time("mqms_cust_wait")
+sim.plot_abandoned("highvol_sqms_xskill")
+sim.plot_service_time("highvol_sqms_xskill_arrival_times", "mqms_depart_times")
+sim.plot_idle_hist(shift,"highvol_sqms_xskill_agent_idle")
+sim.plot_wait_time("highvol_sqms_xskill_cust_wait")
 print('finished')
 # Multi server with queues cross skilled
 import MMnnPSQ
 sim = MMnnPSQ.SimulationModel(20,180)
 shift, hist = sim.MMSNPS_simulation_loop_singlesim(57600, 2)
-sim.plot_abandoned("mult_q_mult_server_q")
-sim.plot_service_time("mqms_arrival_times", "mqms_depart_times")
-sim.plot_idle_hist(shift,"mqms_agent_idle")
-sim.plot_wait_time("mqms_cust_wait")
+sim.plot_abandoned("mqms_xskill_q")
+sim.plot_service_time("mqms_xskill_arrival_times", "mqms_depart_times")
+sim.plot_idle_hist(shift,"mqms_xskill_agent_idle")
+sim.plot_wait_time("mqms_xskill_cust_wait")
 print('finished')
 
 import pandas as pd
@@ -149,10 +150,23 @@ p = [0.,0.354,0.654,0.797,0.897,0.976,1.]
 import MMnnPSQ
 sim = MMnnPSQ.SimulationModel(20,180)
 shift, hist = sim.MMSNPS_simulation_loop_singlesim_seg_qs(57600, 2)
-sim.plot_abandoned("mult_q_mult_server_q")
-sim.plot_service_time("mqms_arrival_times", "mqms_depart_times")
-sim.plot_idle_hist(shift,"mqms_agent_idle")
-sim.plot_wait_time("mqms_cust_wait")
+sim.plot_abandoned("mqms_teams")
+sim.plot_service_time("mqms_teams_arrival_times", "mqms_depart_times")
+sim.plot_idle_hist(shift,"mqms_teams_agent_idle")
+sim.plot_wait_time("mqms_teams_cust_wait")
 print('finished')
 
-
+import scipy.stats 
+import pandas as pd
+import MMnnPSQ
+sim = MMnnPSQ.SimulationModel(20,180)
+Sims = [sim.MMSNPS_simulation_loop_multisim_seg_qs(57600,2) for i in range(50)]
+ls = []
+for i in range(0, len(Sims)):
+    avg_wait_time, median_wait_time, max_wait_time, avg_service_time, avg_ar, sum_chats_answered = Sims[i]
+    d={'wait': avg_wait_time,'med_wait': median_wait_time,'max_wait': max_wait_time, 
+       'service': avg_service_time, 'aband': avg_ar, 'answered': sum_chats_answered}
+    ls.append(d)
+df1 = pd.DataFrame(ls)
+df1.to_csv("df_140x.csv")
+print(df1)
